@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="p-4">
+
+<h2 class="text-lg font-bold">Cart</h2>
+<p id="sum"></p>
+
+<a href="checkout.html" class="block mt-4 bg-green-600 text-white text-center p-3 rounded">Checkout</a>
+
+<script>
+document.getElementById('sum').innerText = 'Total: $'+total();
+</script>
+</body>
+</html>
