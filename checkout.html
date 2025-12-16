@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/cart.js"></script>
+</head>
+<body class="p-4">
+
+<h2 class="font-bold">Checkout</h2>
+<button onclick="pay()" class="mt-4 bg-purple-700 text-white p-3 rounded">Pay with ABA</button>
+
+<script>
+function pay(){
+ fetch('https://YOUR-GLITCH.glitch.me/create-order',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({amount:total()})
+ })
+ .then(r=>r.json())
+ .then(data=>{
+  const f=document.createElement('form');
+  f.method='POST';
+  f.action='https://sandbox.payway.com.kh/payment';
+  for(let k in data){
+   const i=document.createElement('input');
+   i.type='hidden';i.name=k;i.value=data[k];
+   f.appendChild(i);
+  }
+  document.body.appendChild(f);f.submit();
+ });
+}
+</script>
+</body>
+</html>
