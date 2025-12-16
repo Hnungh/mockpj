@@ -11,7 +11,7 @@
 
 <script>
 function pay(){
- fetch('/https://aba-payway-backend.up.railway.app/create-order',{
+ fetch('https://aba-payway-backend.up.railway.app/create-order',{
   method:'POST',
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify({amount:total()})
