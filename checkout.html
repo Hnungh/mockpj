@@ -37,67 +37,78 @@
     </div>
 
     <script>
-        // CRC16 Function
-        function crc16(data) {
-            let crc = 0xFFFF;
-            for (let i = 0; i < data.length; i++) {
-                let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
-                x ^= x >> 4;
-                crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
-            }
-            return crc.toString(16).toUpperCase().padStart(4, '0');
-        }
+        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE (มาตรฐานสากล)
+function crc16(data) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+        let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
+        x ^= x >> 4;
+        crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+}
 
-        function initCheckout() {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-            const total = subtotal + 2;
+function generateKHQR() {
+    // 1. ดึงยอดเงินจากระบบ (สมมติเป็น USD ตามที่คุณให้มา)
+    const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
+    const shipping = 2.00;
+    const total = (subtotal + shipping).toFixed(2); // ยอดสุทธิ เช่น 12.00
+    
+    document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
+    document.getElementById('final-total').innerText = `$${total}`;
 
-            document.getElementById('checkout-items').innerHTML = cart.map(i => `
-                <div class="flex justify-between text-sm"><span>${i.name}</span> <span>$${i.price}</span></div>
-            `).join('');
-            
-            document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
-            const totalStr = total.toFixed(2);
-            document.getElementById('final-total').innerText = `$${totalStr}`;
+    // 2. ข้อมูลคงที่จาก ABA Merchant ของคุณ (ถอดรหัสจาก String ที่คุณส่งมา)
+    const tag30 = "0016abaakhppxxx@abaa01151250719163741160208ABA Bank";
+    const tag52 = "5399";
+    const tag53 = "840"; // 840 = USD, 116 = KHR
+    const tag58 = "KH";
+    const tag59 = "BARDS";
+    const tag60 = "SIEM REAP";
+    const tag62 = "0010PAYWAY@ABA010714079080209031889323050116";
 
-            // Generate KHQR (ABA Style)
-            const merchantName = "BARDS";
-            const accountID = "4942576"; // ใส่ ABA Account ID ของคุณ
-            let payload = "000201010212";
-            let tag30 = "0011bank_id_010107" + accountID.length.toString().padStart(2, '0') + accountID;
-            payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
-            payload += "520459995303840"; // Currency USD
-            payload += "54" + totalStr.length.toString().padStart(2, '0') + totalStr;
-            payload += "5802KH59" + merchantName.length.toString().padStart(2, '0') + merchantName + "6006PhnomP6304";
-            
-            const finalPayload = payload + crc16(payload);
-            new QRCode(document.getElementById("qrcode"), { text: finalPayload, width: 200, height: 200 });
-        }
+    // 3. ประกอบ Payload ตามลำดับ
+    let payload = "000201"; // Payload Indicator
+    payload += "010212";   // 12 = Dynamic (ระบุจำนวนเงิน)
+    
+    // Merchant Account Information
+    payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
+    
+    // ข้อมูลร้านค้าและหมวดหมู่
+    payload += "5204" + tag52;
+    payload += "5303" + tag53;
+    
+    // ยอดเงิน (Tag 54) - นี่คือส่วนที่ระบบจะคำนวณให้
+    payload += "54" + total.length.toString().padStart(2, '0') + total;
+    
+    payload += "5802" + tag58;
+    payload += "59" + tag59.length.toString().padStart(2, '0') + tag59;
+    payload += "60" + tag60.length.toString().padStart(2, '0') + tag60;
+    
+    // Additional Data Field (Tag 62)
+    payload += "62" + tag62.length.toString().padStart(2, '0') + tag62;
+    
+    // CRC Tag (Tag 63)
+    payload += "6304";
 
-        async function placeOrder() {
-            const slipFile = document.getElementById('slip-input').files[0];
-            if (!slipFile) return alert("Please upload payment slip!");
+    // 4. คำนวณ Checksum สุดท้าย
+    const finalPayload = payload + crc16(payload);
 
-            // แปลงรูปเป็น Base64 เพื่อเก็บใน LocalStorage (จำลอง Backend)
-            const reader = new FileReader();
-            reader.readAsDataURL(slipFile);
-            reader.onload = function () {
-                const order = {
-                    orderID: "ORD-" + Date.now(),
-                    items: JSON.parse(localStorage.getItem('cart')),
-                    total: document.getElementById('final-total').innerText,
-                    slip: reader.result,
-                    date: new Date().toLocaleString()
-                };
+    // 5. สร้าง QR Code
+    document.getElementById("qrcode").innerHTML = ""; // ล้างค่าเก่า
+    new QRCode(document.getElementById("qrcode"), {
+        text: finalPayload,
+        width: 250,
+        height: 250,
+        colorDark : "#003366",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+    });
 
-                const orders = JSON.parse(localStorage.getItem('orders')) || [];
-                orders.push(order);
-                localStorage.setItem('orders', JSON.stringify(orders));
-                
-                window.location.href = "success.html";
-            };
-        }
+    console.log("New KHQR Payload:", finalPayload);
+}
+
+// เรียกใช้งานเมื่อหน้าโหลด
+window.onload = generateKHQR;
 
         initCheckout();
     </script>
