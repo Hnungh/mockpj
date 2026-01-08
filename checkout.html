@@ -1,25 +1,105 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Checkout</title></head>
-<body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Checkout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 max-w-4xl grid md:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-8 rounded-2xl shadow-sm">
+            <h2 class="text-2xl font-bold mb-6">Summary</h2>
+            <div id="checkout-items" class="space-y-4 mb-6"></div>
+            <div class="border-t pt-4 space-y-2">
+                <div class="flex justify-between"><span>Subtotal:</span> <span id="subtotal">$0.00</span></div>
+                <div class="flex justify-between text-green-600"><span>Shipping:</span> <span>$2.00</span></div>
+                <div class="flex justify-between text-2xl font-bold border-t pt-2">
+                    <span>Total:</span> <span id="final-total" class="text-blue-600">$0.00</span>
+                </div>
+            </div>
+        </div>
 
-<h2>Checkout</h2>
-<div id="sum"></div>
-<button onclick="pay()">Pay</button>
+        <div class="bg-white p-8 rounded-2xl shadow-sm text-center">
+            <h2 class="text-2xl font-bold mb-4">Payment (KHQR)</h2>
+            <div id="qrcode" class="flex justify-center mb-6 p-4 border rounded-xl bg-gray-50"></div>
+            
+            <div class="mb-6">
+                <label class="block text-left text-sm font-medium text-gray-700 mb-2">Upload Payment Slip</label>
+                <input type="file" id="slip-input" accept="image/*" class="w-full p-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+            </div>
 
-<script>
-const SHIPPING = 1.50;
-let cart = JSON.parse(localStorage.getItem('cart')||'[]');
-let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-let grand = (total + SHIPPING).toFixed(2);
+            <button onclick="placeOrder()" id="btn-submit" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition">
+                Confirm & Send Order
+            </button>
+        </div>
+    </div>
 
-document.getElementById('sum').innerHTML =
-`Subtotal: $${total}<br>Shipping: $${SHIPPING}<br><b>Total: $${grand}</b>`;
+    <script>
+        // CRC16 Function
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
+                x ^= x >> 4;
+                crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
 
-localStorage.setItem('amount',grand);
-localStorage.setItem('order','ORD-'+Date.now());
+        function initCheckout() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+            const total = subtotal + 2;
 
-function pay(){ location.href='success.html'; }
-</script>
+            document.getElementById('checkout-items').innerHTML = cart.map(i => `
+                <div class="flex justify-between text-sm"><span>${i.name}</span> <span>$${i.price}</span></div>
+            `).join('');
+            
+            document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
+            const totalStr = total.toFixed(2);
+            document.getElementById('final-total').innerText = `$${totalStr}`;
+
+            // Generate KHQR (ABA Style)
+            const merchantName = "TECH-X STORE";
+            const accountID = "000123456"; // ใส่ ABA Account ID ของคุณ
+            let payload = "000201010212";
+            let tag30 = "0011bank_id_010107" + accountID.length.toString().padStart(2, '0') + accountID;
+            payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
+            payload += "520459995303840"; // Currency USD
+            payload += "54" + totalStr.length.toString().padStart(2, '0') + totalStr;
+            payload += "5802KH59" + merchantName.length.toString().padStart(2, '0') + merchantName + "6006PhnomP6304";
+            
+            const finalPayload = payload + crc16(payload);
+            new QRCode(document.getElementById("qrcode"), { text: finalPayload, width: 200, height: 200 });
+        }
+
+        async function placeOrder() {
+            const slipFile = document.getElementById('slip-input').files[0];
+            if (!slipFile) return alert("Please upload payment slip!");
+
+            // แปลงรูปเป็น Base64 เพื่อเก็บใน LocalStorage (จำลอง Backend)
+            const reader = new FileReader();
+            reader.readAsDataURL(slipFile);
+            reader.onload = function () {
+                const order = {
+                    orderID: "ORD-" + Date.now(),
+                    items: JSON.parse(localStorage.getItem('cart')),
+                    total: document.getElementById('final-total').innerText,
+                    slip: reader.result,
+                    date: new Date().toLocaleString()
+                };
+
+                const orders = JSON.parse(localStorage.getItem('orders')) || [];
+                orders.push(order);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                
+                window.location.href = "success.html";
+            };
+        }
+
+        initCheckout();
+    </script>
 </body>
 </html>
