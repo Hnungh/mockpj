@@ -1,0 +1,32 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+}
+header {
+  background: #1f1f1f;
+  color: #fff;
+  padding: 15px;
+}
+.container {
+  padding: 16px;
+}
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+button {
+  width: 100%;
+  padding: 12px;
+  background: #6a5acd;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+a {
+  text-decoration: none;
+  color: #6a5acd;
+}
