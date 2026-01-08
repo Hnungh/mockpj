@@ -1,43 +1,25 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Cart</title></head>
+<head><meta charset="UTF-8"><title>Checkout</title></head>
 <body>
 
-<h2>Cart</h2>
-<div id="cart"></div>
-<button onclick="checkout()">Checkout</button>
+<h2>Checkout</h2>
+<div id="sum"></div>
+<button onclick="pay()">Pay</button>
 
 <script>
+const SHIPPING = 1.50;
 let cart = JSON.parse(localStorage.getItem('cart')||'[]');
-let div = document.getElementById('cart');
-let total = 0;
+let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+let grand = (total + SHIPPING).toFixed(2);
 
-if(cart.length===0){
-  div.innerHTML = "No order";
-}
+document.getElementById('sum').innerHTML =
+`Subtotal: $${total}<br>Shipping: $${SHIPPING}<br><b>Total: $${grand}</b>`;
 
-cart.forEach((i,idx)=>{
-  total += i.price * i.qty;
-  div.innerHTML += `
-  ${i.name} x ${i.qty} = $${i.price*i.qty}
-  <button onclick="add(${idx})">+</button>
-  <button onclick="sub(${idx})">-</button><br>`;
-});
+localStorage.setItem('amount',grand);
+localStorage.setItem('order','ORD-'+Date.now());
 
-function add(i){ cart[i].qty++; save(); }
-function sub(i){
-  cart[i].qty--;
-  if(cart[i].qty<=0) cart.splice(i,1);
-  save();
-}
-function save(){
-  localStorage.setItem('cart',JSON.stringify(cart));
-  location.reload();
-}
-function checkout(){
-  if(cart.length===0){ alert('No order'); return; }
-  location.href='checkout.html';
-}
+function pay(){ location.href='success.html'; }
 </script>
 </body>
 </html>
