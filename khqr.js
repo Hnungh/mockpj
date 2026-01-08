@@ -1,45 +1,30 @@
-function emv(id, value) {
-  return id + value.length.toString().padStart(2, "0") + value;
-}
-
-function crc16(payload) {
+<script>
+function crc16(payload){
   let crc = 0xFFFF;
-  for (let c of payload) {
-    crc ^= c.charCodeAt(0) << 8;
-    for (let i = 0; i < 8; i++) {
-      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-      crc &= 0xFFFF;
-    }
+  for (let c of payload){
+    crc ^= c.charCodeAt(0)<<8;
+    for(let i=0;i<8;i++)
+      crc = (crc&0x8000)?(crc<<1)^0x1021:crc<<1;
   }
-  return crc.toString(16).toUpperCase().padStart(4, "0");
+  return ("0000"+(crc&0xFFFF).toString(16).toUpperCase()).slice(-4);
 }
 
-/*
- ⚠️ CHANGE HERE ให้ตรง ABA ของคุณ
-*/
-const ABA_ACCOUNT = "1407908"; // เบอร์ ABA / Account จริง
-const MERCHANT_NAME = "BARDS";
-const MERCHANT_CITY = "PHNOM PENH";
-
-function buildKHQR({ amount, orderId }) {
-
-  const payload =
-    "000201" +
-    "010211" +
-    emv("29",
-      emv("00", "KHQR") +
-      emv("01", ABA_ACCOUNT)
-    ) +
-    emv("52", "0000") +
-    emv("53", "116") +           // KHR
-    emv("58", "KH") +
-    emv("59", MERCHANT_NAME) +
-    emv("60", MERCHANT_CITY) +
-    emv("54", amount.toString()) +
-    emv("62",
-      emv("01", orderId)
-    ) +
-    "6304";
-
-  return payload + crc16(payload);
+function tag(id,val){
+  return id + val.length.toString().padStart(2,'0') + val;
 }
+
+function khqr(amount,invoice){
+  let s='';
+  s+=tag('00','01');
+  s+=tag('01','12'); // dynamic
+  s+=tag('29', tag('00','ABA') + tag('01','1407908'));
+  s+=tag('52','5399');
+  s+=tag('53','840'); // USD
+  s+=tag('54',amount);
+  s+=tag('58','KH');
+  s+=tag('59','LOK POEUY');
+  s+=tag('62', tag('01',invoice));
+  s+= '6304';
+  return s + crc16(s);
+}
+</script>
