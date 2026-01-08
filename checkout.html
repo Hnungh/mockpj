@@ -1,34 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="js/cart.js"></script>
+  <title>Checkout</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js"></script>
 </head>
-<body class="p-4">
+<body>
 
-<h2 class="font-bold">Checkout</h2>
-<button onclick="pay()" class="mt-4 bg-purple-700 text-white p-3 rounded">Pay with ABA</button>
+<header>ชำระเงิน KHQR</header>
+<div class="container card" id="pay"></div>
 
 <script>
-function pay(){
- fetch('https://aba-payway-backend.up.railway.app/create-order',{
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({amount:total()})
- })
- .then(r=>r.json())
- .then(data=>{
-  const f=document.createElement('form');
-  f.method='POST';
-  f.action='https://sandbox.payway.com.kh/payment';
-  for(let k in data){
-   const i=document.createElement('input');
-   i.type='hidden';i.name=k;i.value=data[k];
-   f.appendChild(i);
-  }
-  document.body.appendChild(f);f.submit();
- });
+// สร้าง Order ID
+function genOrderId() {
+  return "ORD" + Date.now();
+}
+
+const orderId = genOrderId();
+const subtotal = calcSubtotal();
+const shipping = calcShipping(subtotal);
+const total = subtotal + shipping;
+
+// helper EMV
+function emv(id, value) {
+  return id + value.length.toString().padStart(2, "0") + value;
+}
+
+// ⚠️ เปลี่ยน Account ID ตรงนี้
+const KHQR_BASE =
+  "000201" +
+  "010211" +
+  "29370006KHQR010812345678" +
+  "5802KH" +
+  "5303116";
+
+const amountField = emv("54", total.toString());
+
+const additionalData =
+  "62" +
+  emv("01", orderId) +
+  emv("05", "DEMO-SHOP");
+
+const khqr = KHQR_BASE + amountField + additionalData + "6304";
+
+document.getElementById("pay").innerHTML = `
+<p><b>Order:</b> ${orderId}</p>
+<p>ยอดชำระ: <b>${total}៛</b></p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${khqr}">
+<br><br>
+<button onclick="finish()">ฉันชำระเงินแล้ว</button>
+`;
+
+function finish() {
+  clearCart();
+  location.href = "success.html?order=" + orderId;
 }
 </script>
+
 </body>
 </html>
