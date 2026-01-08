@@ -1,32 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Pay</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success - TECH-X</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="bg-gray-50 h-screen flex flex-col">
 
-<h2>Scan with ABA</h2>
-<canvas id="qr"></canvas>
+    <main class="flex-grow flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden pt-10 pb-8 px-8 text-center">
+            
+            <div class="mb-6 relative">
+                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <i class="fa-solid fa-check text-5xl text-green-500"></i>
+                </div>
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 border-4 border-green-500 rounded-full animate-ping opacity-20"></div>
+            </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="khqr.js"></script>
+            <h1 class="text-3xl font-black text-gray-800 mb-2">ขอบคุณสำหรับการสั่งซื้อ!</h1>
+            <p class="text-gray-500 mb-8">เราได้รับหลักฐานการโอนเงินของท่านแล้ว และกำลังดำเนินการตรวจสอบ</p>
 
-<script>
-const amount = localStorage.getItem('amount');
-const order  = localStorage.getItem('order');
+            <div class="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
+                <div class="flex justify-between items-center border-b border-dashed pb-3">
+                    <span class="text-gray-500 text-sm">หมายเลขคำสั่งซื้อ:</span>
+                    <span id="display-order-id" class="font-bold text-gray-800">#ORD-000000</span>
+                </div>
+                <div class="flex justify-between items-center pt-1">
+                    <span class="text-gray-500 text-sm">ยอดรวมที่ชำระ:</span>
+                    <span id="display-total" class="font-bold text-blue-600 text-lg">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500 text-sm">สถานะ:</span>
+                    <span class="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-1 rounded-full font-bold uppercase">รอดำเนินการ (Pending)</span>
+                </div>
+            </div>
 
-if(!amount || !order){
-  alert('No order data');
-}else{
-  const payload = khqr(amount, order);
-  QRCode.toCanvas(
-    document.getElementById('qr'),
-    payload,
-    { width: 260 }
-  );
-}
-</script>
+            <div class="space-y-3">
+                <button onclick="clearAndGoHome()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition shadow-lg">
+                    กลับไปช้อปปิ้งต่อ
+                </button>
+                <a href="admin.html" class="block w-full text-blue-600 font-medium hover:underline text-sm">
+                    ดูประวัติการสั่งซื้อของฉัน
+                </a>
+            </div>
+        </div>
+    </main>
 
+    <footer class="p-6 text-center text-gray-400 text-xs">
+        <p>&copy; 2024 TECH-X Store. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function loadOrderDetails() {
+            // ดึงข้อมูลออเดอร์ล่าสุดจากรายการออเดอร์ทั้งหมด
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            
+            if (orders.length > 0) {
+                const lastOrder = orders[orders.length - 1]; // เอาออเดอร์ล่าสุด
+                
+                document.getElementById('display-order-id').innerText = "#" + lastOrder.orderID;
+                document.getElementById('display-total').innerText = lastOrder.total;
+            } else {
+                // หากไม่มีข้อมูล ให้เด้งกลับหน้าแรก
+                window.location.href = "index.html";
+            }
+        }
+
+        function clearAndGoHome() {
+            // ล้างตะกร้าสินค้าหลังจากซื้อเสร็จแล้ว
+            localStorage.removeItem('cart');
+            localStorage.removeItem('finalTotal');
+            window.location.href = "index.html";
+        }
+
+        // รันฟังก์ชันเมื่อโหลดหน้า
+        window.onload = loadOrderDetails;
+    </script>
 </body>
 </html>
