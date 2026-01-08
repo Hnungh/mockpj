@@ -1,21 +1,29 @@
-<header>ABA KHQR Demo Shop</header>
-<div class="container">
-  <div class="card">
-    <h3>Retro Jacket</h3>
-    <p>45,000៛</p>
-    <button onclick="addItem({id:1,name:'Jacket',price:45000})">เพิ่ม</button>
-  </div>
-  <div class="card">
-    <h3>Vintage Shirt</h3>
-    <p>25,000៛</p>
-    <button onclick="addItem({id:2,name:'Shirt',price:25000})">เพิ่ม</button>
-  </div>
-  <div class="card">
-    <h3>Classic Pants</h3>
-    <p>35,000៛</p>
-    <button onclick="addItem({id:3,name:'Pants',price:35000})">เพิ่ม</button>
-  </div>
-  <a href="cart.html">ไปตะกร้า</a>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Demo Shop</title>
+</head>
+<body>
 
-<script src="app.js"></script>
+<h2>Products</h2>
+
+<button onclick="add(1,'Jacket',25)">Add Jacket $25</button><br>
+<button onclick="add(2,'T-Shirt',12)">Add T-Shirt $12</button><br>
+<button onclick="add(3,'Bag',18)">Add Bag $18</button><br><br>
+
+<a href="cart.html">Go to Cart</a>
+
+<script>
+function add(id,name,price){
+  let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+  let item = cart.find(i=>i.id===id);
+  if(item) item.qty++;
+  else cart.push({id,name,price,qty:1});
+  localStorage.setItem('cart',JSON.stringify(cart));
+  alert('Added');
+}
+</script>
+
+</body>
+</html>
