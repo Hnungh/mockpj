@@ -51,7 +51,7 @@ function crc16(data) {
 function generateKHQR() {
     // 1. ดึงยอดเงินจากระบบ (สมมติเป็น USD ตามที่คุณให้มา)
     const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
-    const shipping = 2.00;
+    const shipping = 0.01;
     const total = (subtotal + shipping).toFixed(2); // ยอดสุทธิ เช่น 12.00
     
     document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
