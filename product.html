@@ -1,23 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Product</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js"></script>
+    <meta charset="UTF-8">
+    <title>Product Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-6 py-12">
+        <div id="product-detail" class="bg-white rounded-3xl shadow-lg p-8 flex flex-col md:flex-row gap-12">
+            </div>
+    </div>
 
-<header>รายละเอียดสินค้า</header>
+    <script>
+        const products = [ /* ... ข้อมูลเดียวกับหน้าแรก ... */ ];
+        const params = new URLSearchParams(window.location.search);
+        const productId = parseInt(params.get('id'));
+        const product = products.find(p => p.id === productId);
 
-<div class="container card">
-  <h2>American Retro Jacket</h2>
-  <p>ราคา 45,000៛</p>
-  <button onclick="addToCart({name:'American Retro Jacket',price:45000})">
-    เพิ่มลงตะกร้า
-  </button>
-</div>
+        if (product) {
+            document.getElementById('product-detail').innerHTML = `
+                <div class="md:w-1/2">
+                    <img src="${product.img}" class="w-full rounded-2xl">
+                </div>
+                <div class="md:w-1/2 flex flex-col justify-center">
+                    <h1 class="text-4xl font-bold mb-4">${product.name}</h1>
+                    <p class="text-gray-500 text-lg mb-6">Experience the next generation of technology with our premium selection.</p>
+                    <span class="text-3xl font-bold text-blue-600 mb-8">$${product.price.toLocaleString()}</span>
+                    <button onclick="addToCart()" class="bg-blue-600 text-white text-xl font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                        Add to Cart
+                    </button>
+                    <a href="index.html" class="text-center mt-4 text-gray-400 hover:underline">Back to store</a>
+                </div>
+            `;
+        }
 
-<a href="cart.html">ดูตะกร้า</a>
-
+        function addToCart() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.push(product);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert('Added to cart!');
+            window.location.href = "cart.html";
+        }
+    </script>
 </body>
 </html>
