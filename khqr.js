@@ -17,7 +17,7 @@ function crc16(payload) {
 /*
  ⚠️ CHANGE HERE ให้ตรง ABA ของคุณ
 */
-const ABA_ACCOUNT = "013946223"; // เบอร์ ABA / Account จริง
+const ABA_ACCOUNT = "4942576"; // เบอร์ ABA / Account จริง
 const MERCHANT_NAME = "BARDS";
 const MERCHANT_CITY = "PHNOM PENH";
 
