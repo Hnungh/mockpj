@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="js/cart.js"></script>
+  <title>Cart</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js"></script>
 </head>
-<body class="p-4">
+<body>
 
-<h2 class="text-lg font-bold">Cart</h2>
-<p id="sum"></p>
-
-<a href="checkout.html" class="block mt-4 bg-green-600 text-white text-center p-3 rounded">Checkout</a>
+<header>ตะกร้าสินค้า</header>
+<div class="container" id="cart"></div>
 
 <script>
-document.getElementById('sum').innerText = 'Total: $'+total();
+const cart = getCart();
+let html = "";
+
+cart.forEach(i => {
+  html += `<div class="card">${i.name} - ${i.price}៛</div>`;
+});
+
+const subtotal = calcSubtotal();
+const shipping = calcShipping(subtotal);
+
+html += `
+<div class="card">
+  <p>รวมสินค้า: ${subtotal}៛</p>
+  <p>ค่าส่ง: ${shipping}៛</p>
+  <b>รวมสุทธิ: ${subtotal + shipping}៛</b>
+</div>
+<a href="checkout.html"><button>ไปชำระเงิน</button></a>
+`;
+
+document.getElementById("cart").innerHTML = html;
 </script>
+
 </body>
 </html>
