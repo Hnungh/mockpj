@@ -1,19 +1,31 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Pay</title></head>
+<head>
+<meta charset="UTF-8">
+<title>Pay</title>
+</head>
 <body>
 
-<h2>Scan to Pay (ABA)</h2>
-<canvas id="q"></canvas>
+<h2>Scan with ABA</h2>
+<canvas id="qr"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="khqr.js"></script>
-<script>
-let amt = localStorage.getItem('amount');
-let inv = localStorage.getItem('order');
-let payload = khqr(amt,inv);
 
-QRCode.toCanvas(document.getElementById('q'), payload);
+<script>
+const amount = localStorage.getItem('amount');
+const order  = localStorage.getItem('order');
+
+if(!amount || !order){
+  alert('No order data');
+}else{
+  const payload = khqr(amount, order);
+  QRCode.toCanvas(
+    document.getElementById('qr'),
+    payload,
+    { width: 260 }
+  );
+}
 </script>
 
 </body>
