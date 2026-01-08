@@ -62,8 +62,8 @@
             document.getElementById('final-total').innerText = `$${totalStr}`;
 
             // Generate KHQR (ABA Style)
-            const merchantName = "TECH-X STORE";
-            const accountID = "000123456"; // ใส่ ABA Account ID ของคุณ
+            const merchantName = "BARDS";
+            const accountID = "4942576"; // ใส่ ABA Account ID ของคุณ
             let payload = "000201010212";
             let tag30 = "0011bank_id_010107" + accountID.length.toString().padStart(2, '0') + accountID;
             payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
