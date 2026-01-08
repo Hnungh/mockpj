@@ -1,61 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Checkout</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js"></script>
-</head>
-<body>
+<header>ตะกร้า</header>
+<div class="container" id="c"></div>
 
-<header>ชำระเงิน KHQR</header>
-<div class="container card" id="pay"></div>
-
+<script src="app.js"></script>
 <script>
-// สร้าง Order ID
-function genOrderId() {
-  return "ORD" + Date.now();
+const cart = getCart();
+if (!cart.length) {
+  document.getElementById("c").innerHTML =
+    "<div class='card'>ยังไม่มีสินค้า</div>";
+  throw "";
 }
 
-const orderId = genOrderId();
-const subtotal = calcSubtotal();
-const shipping = calcShipping(subtotal);
-const total = subtotal + shipping;
+let html = "";
+cart.forEach(i => {
+  html += `
+  <div class="card">
+    ${i.name} (${i.qty})<br>
+    ${i.price * i.qty}៛
+    <div class="row">
+      <button onclick="updateQty(${i.id},1)">+</button>
+      <button onclick="updateQty(${i.id},-1)">-</button>
+    </div>
+  </div>`;
+});
 
-// helper EMV
-function emv(id, value) {
-  return id + value.length.toString().padStart(2, "0") + value;
-}
+const sub = subtotal();
+const ship = shippingCost(sub);
+const disc = discountAmount(sub);
+const total = sub + ship - disc;
 
-// ⚠️ เปลี่ยน Account ID ตรงนี้
-const KHQR_BASE =
-  "000201" +
-  "010211" +
-  "29370006KHQR010812345678" +
-  "5802KH" +
-  "5303116";
-
-const amountField = emv("54", total.toString());
-
-const additionalData =
-  "62" +
-  emv("01", orderId) +
-  emv("05", "DEMO-SHOP");
-
-const khqr = KHQR_BASE + amountField + additionalData + "6304";
-
-document.getElementById("pay").innerHTML = `
-<p><b>Order:</b> ${orderId}</p>
-<p>ยอดชำระ: <b>${total}៛</b></p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${khqr}">
-<br><br>
-<button onclick="finish()">ฉันชำระเงินแล้ว</button>
+html += `
+<div class="card">
+  <p>Subtotal: ${sub}៛</p>
+  <p>Shipping: ${ship}៛</p>
+  <p>Discount: -${disc}៛</p>
+  <b>Total: ${total}៛</b>
+</div>
+<a href="checkout.html"><button>ชำระเงิน</button></a>
 `;
 
-function finish() {
-  clearCart();
-  location.href = "success.html?order=" + orderId;
-}
+document.getElementById("c").innerHTML = html;
 </script>
-
-</body>
-</html>
