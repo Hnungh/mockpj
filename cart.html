@@ -1,42 +1,43 @@
-<header>ตะกร้า</header>
-<div class="container" id="c"></div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Cart</title></head>
+<body>
 
-<script src="app.js"></script>
+<h2>Cart</h2>
+<div id="cart"></div>
+<button onclick="checkout()">Checkout</button>
+
 <script>
-const cart = getCart();
-if (!cart.length) {
-  document.getElementById("c").innerHTML =
-    "<div class='card'>ยังไม่มีสินค้า</div>";
-  throw "";
+let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+let div = document.getElementById('cart');
+let total = 0;
+
+if(cart.length===0){
+  div.innerHTML = "No order";
 }
 
-let html = "";
-cart.forEach(i => {
-  html += `
-  <div class="card">
-    ${i.name} (${i.qty})<br>
-    ${i.price * i.qty}៛
-    <div class="row">
-      <button onclick="updateQty(${i.id},1)">+</button>
-      <button onclick="updateQty(${i.id},-1)">-</button>
-    </div>
-  </div>`;
+cart.forEach((i,idx)=>{
+  total += i.price * i.qty;
+  div.innerHTML += `
+  ${i.name} x ${i.qty} = $${i.price*i.qty}
+  <button onclick="add(${idx})">+</button>
+  <button onclick="sub(${idx})">-</button><br>`;
 });
 
-const sub = subtotal();
-const ship = shippingCost(sub);
-const disc = discountAmount(sub);
-const total = sub + ship - disc;
-
-html += `
-<div class="card">
-  <p>Subtotal: ${sub}៛</p>
-  <p>Shipping: ${ship}៛</p>
-  <p>Discount: -${disc}៛</p>
-  <b>Total: ${total}៛</b>
-</div>
-<a href="checkout.html"><button>ชำระเงิน</button></a>
-`;
-
-document.getElementById("c").innerHTML = html;
+function add(i){ cart[i].qty++; save(); }
+function sub(i){
+  cart[i].qty--;
+  if(cart[i].qty<=0) cart.splice(i,1);
+  save();
+}
+function save(){
+  localStorage.setItem('cart',JSON.stringify(cart));
+  location.reload();
+}
+function checkout(){
+  if(cart.length===0){ alert('No order'); return; }
+  location.href='checkout.html';
+}
 </script>
+</body>
+</html>
