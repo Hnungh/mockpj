@@ -1,37 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Cart</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js"></script>
-</head>
-<body>
+<header>ตะกร้า</header>
+<div class="container" id="c"></div>
 
-<header>ตะกร้าสินค้า</header>
-<div class="container" id="cart"></div>
-
+<script src="app.js"></script>
 <script>
 const cart = getCart();
-let html = "";
+if (!cart.length) {
+  document.getElementById("c").innerHTML =
+    "<div class='card'>ยังไม่มีสินค้า</div>";
+  throw "";
+}
 
+let html = "";
 cart.forEach(i => {
-  html += `<div class="card">${i.name} - ${i.price}៛</div>`;
+  html += `
+  <div class="card">
+    ${i.name} (${i.qty})<br>
+    ${i.price * i.qty}៛
+    <div class="row">
+      <button onclick="updateQty(${i.id},1)">+</button>
+      <button onclick="updateQty(${i.id},-1)">-</button>
+    </div>
+  </div>`;
 });
 
-const subtotal = calcSubtotal();
-const shipping = calcShipping(subtotal);
+const sub = subtotal();
+const ship = shippingCost(sub);
+const disc = discountAmount(sub);
+const total = sub + ship - disc;
 
 html += `
 <div class="card">
-  <p>รวมสินค้า: ${subtotal}៛</p>
-  <p>ค่าส่ง: ${shipping}៛</p>
-  <b>รวมสุทธิ: ${subtotal + shipping}៛</b>
+  <p>Subtotal: ${sub}៛</p>
+  <p>Shipping: ${ship}៛</p>
+  <p>Discount: -${disc}៛</p>
+  <b>Total: ${total}៛</b>
 </div>
-<a href="checkout.html"><button>ไปชำระเงิน</button></a>
+<a href="checkout.html"><button>ชำระเงิน</button></a>
 `;
 
-document.getElementById("cart").innerHTML = html;
+document.getElementById("c").innerHTML = html;
 </script>
-
-</body>
-</html>
