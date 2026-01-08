@@ -1,33 +1,43 @@
-<header>KHQR Payment</header>
-<div class="container card" id="pay"></div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Cart</title></head>
+<body>
 
-<script src="app.js"></script>
-<script src="khqr.js"></script>
+<h2>Cart</h2>
+<div id="cart"></div>
+<button onclick="checkout()">Checkout</button>
+
 <script>
-const cart = getCart();
-if (!cart.length) {
-  document.getElementById("pay").innerText = "ไม่มีออเดอร์";
-  throw "";
+let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+let div = document.getElementById('cart');
+let total = 0;
+
+if(cart.length===0){
+  div.innerHTML = "No order";
 }
 
-const orderId = "ORD" + Date.now();
-const total =
-  subtotal() +
-  shippingCost(subtotal()) -
-  discountAmount(subtotal());
+cart.forEach((i,idx)=>{
+  total += i.price * i.qty;
+  div.innerHTML += `
+  ${i.name} x ${i.qty} = $${i.price*i.qty}
+  <button onclick="add(${idx})">+</button>
+  <button onclick="sub(${idx})">-</button><br>`;
+});
 
-const qr = buildKHQR({ amount: total, orderId });
-
-document.getElementById("pay").innerHTML = `
-<p>Order: ${orderId}</p>
-<p><b>${total}៛</b></p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${qr}">
-<br><br>
-<button onclick="finish()">ฉันชำระแล้ว</button>
-`;
-
-function finish() {
-  clearCart();
-  location.href = "success.html?o=" + orderId;
+function add(i){ cart[i].qty++; save(); }
+function sub(i){
+  cart[i].qty--;
+  if(cart[i].qty<=0) cart.splice(i,1);
+  save();
+}
+function save(){
+  localStorage.setItem('cart',JSON.stringify(cart));
+  location.reload();
+}
+function checkout(){
+  if(cart.length===0){ alert('No order'); return; }
+  location.href='checkout.html';
 }
 </script>
+</body>
+</html>
