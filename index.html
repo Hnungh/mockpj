@@ -1,21 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>KHQR Demo Shop</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header>KHQR Demo Shop</header>
-
+<header>ABA KHQR Demo Shop</header>
 <div class="container">
   <div class="card">
-    <h3>American Retro Jacket</h3>
-    <p>ราคา 45,000៛</p>
-    <a href="product.html">ดูรายละเอียด</a>
+    <h3>Retro Jacket</h3>
+    <p>45,000៛</p>
+    <button onclick="addItem({id:1,name:'Jacket',price:45000})">เพิ่ม</button>
   </div>
-
+  <div class="card">
+    <h3>Vintage Shirt</h3>
+    <p>25,000៛</p>
+    <button onclick="addItem({id:2,name:'Shirt',price:25000})">เพิ่ม</button>
+  </div>
+  <div class="card">
+    <h3>Classic Pants</h3>
+    <p>35,000៛</p>
+    <button onclick="addItem({id:3,name:'Pants',price:35000})">เพิ่ม</button>
+  </div>
   <a href="cart.html">ไปตะกร้า</a>
 </div>
 
-</body>
-</html>
+<script src="app.js"></script>
