@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Tech Store</title>
+    <title>Global Tech Store - BARDS by P.LOK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-blue-600">TECH-X</a>
+            <a href="index.html" class="text-2xl font-bold text-blue-600">BARDS by P.LOK</a>
             <div class="space-x-6 flex items-center">
-                <a href="admin.html" class="text-gray-500 hover:text-blue-600">Admin</a>
                 <a href="cart.html" class="relative">
                     <i class="fa-solid fa-cart-shopping text-xl text-gray-700"></i>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
@@ -22,8 +21,8 @@
     </nav>
 
     <header class="bg-blue-600 py-16 text-center text-white mb-10">
-        <h1 class="text-4xl font-extrabold mb-4">นวัตกรรมที่คุณสัมผัสได้</h1>
-        <p class="text-blue-100 text-lg">สินค้าแท้ 100% พร้อมจัดส่งทั่วกัมพูชา</p>
+        <h1 class="text-4xl font-extrabold mb-4">Innovation You Can Feel</h1>
+        <p class="text-blue-100 text-lg">100% Authentic Products | Shipping Across Cambodia</p>
     </header>
 
     <main class="container mx-auto px-6 pb-20">
@@ -50,7 +49,7 @@
                     <h3 class="font-bold text-gray-800 text-lg">${p.name}</h3>
                     <div class="flex justify-between items-center mt-4">
                         <span class="text-blue-600 font-bold text-xl">$${p.price.toLocaleString()}</span>
-                        <a href="product.html?id=${p.id}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 hover:text-white transition">ดูรายละเอียด</a>
+                        <a href="product.html?id=${p.id}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 hover:text-white transition">View Details</a>
                     </div>
                 </div>
             `).join('');
@@ -58,9 +57,12 @@
 
         function updateCartCount() {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            document.getElementById('cart-count').innerText = cart.length;
+            // Calculate total items in cart
+            const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            document.getElementById('cart-count').innerText = totalItems;
         }
 
+        // Initialize
         renderProducts();
         updateCartCount();
     </script>
