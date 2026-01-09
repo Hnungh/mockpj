@@ -37,57 +37,80 @@
     </div>
 
     <script>
-        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE ตามมาตรฐาน EMVCo
+        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE (มาตรฐานสูงสุดของ EMVCo)
 function crc16(data) {
     let crc = 0xFFFF;
+    const polynomial = 0x1021;
     for (let i = 0; i < data.length; i++) {
-        let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
-        x ^= x >> 4;
-        crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+        let b = data.charCodeAt(i);
+        for (let j = 0; j < 8; j++) {
+            let bit = ((b >> (7 - j) & 1) == 1);
+            let c15 = ((crc >> 15 & 1) == 1);
+            crc <<= 1;
+            if (c15 ^ bit) crc ^= polynomial;
+        }
     }
-    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    crc &= 0xFFFF;
+    return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
 function generateKHQR() {
-    // 1. ดึงยอดเงินจากระบบ
+    // 1. คำนวณยอดเงินสุทธิ
     const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
     const shipping = 2.00;
-    const total = (subtotal + shipping).toFixed(2); // เช่น 1011.00
+    const total = (subtotal + shipping).toFixed(2); // ต้องมี .00 เสมอ
 
     document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
     document.getElementById('final-total').innerText = `$${total}`;
 
-    // 2. ใช้โครงสร้าง String จากต้นฉบับที่คุณให้มา (USD Version)
-    // ผมจะแยกส่วนก่อนและหลังส่วนที่จะแทรก Amount
-    
-    const part1 = "00020101021130510016abaakhppxxx@abaa01151250719163741160208ABA Bank520453995303840";
-    const amountTag = "54" + total.length.toString().padStart(2, '0') + total;
-    const part2 = "5802KH5913BARDS6009SIEM REAP624768430010PAYWAY@ABA010714079080209031889323050116";
-    const crcTag = "6304";
+    // 2. ข้อมูลร้านค้า (จาก String ที่คุณส่งมา)
+    const merchantID = "abaakhppxxx@abaa"; // รหัสบัญชีคุณ
+    const merchantName = "LOHA by P.LOK";
+    const city = "SIEM REAP";
 
-    // 3. ประกอบร่าง: ส่วนแรก + ยอดเงิน + ส่วนหลัง + แท็ก CRC
-    const stringToCalculate = part1 + amountTag + part2 + crcTag;
+    // 3. สร้างโครงสร้าง KHQR แบบ Dynamic (010212)
+    // Tag 00: Payload Version
+    // Tag 01: Point of Initiation (12 = Dynamic QR)
+    let payload = "000201010212";
 
-    // 4. คำนวณ Checksum จาก String ทั้งหมด
-    const finalPayload = stringToCalculate + crc16(stringToCalculate);
+    // Tag 30: Merchant Information (โครงสร้างสำหรับ ABA/Bakong)
+    let tag30 = "0009bakong.kh"; 
+    tag30 += "01" + merchantID.length.toString().padStart(2, '0') + merchantID;
+    payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
 
-    // 5. แสดงผล QR Code
+    // Tag 52: Category Code
+    payload += "52045399";
+    // Tag 53: Currency (840 = USD)
+    payload += "5303840";
+    // Tag 54: Amount (ยอดเงินที่คำนวณ)
+    payload += "54" + total.length.toString().padStart(2, '0') + total;
+    // Tag 58: Country Code
+    payload += "5802KH";
+    // Tag 59: Merchant Name
+    payload += "59" + merchantName.length.toString().padStart(2, '0') + merchantName;
+    // Tag 60: Merchant City
+    payload += "60" + city.length.toString().padStart(2, '0') + city;
+    // Tag 63: CRC Placeholder
+    payload += "6304";
+
+    // 4. คำนวณ CRC16 และต่อท้าย
+    const finalQR = payload + crc16(payload);
+
+    // 5. แสดงผล QR Code ด้วยความละเอียดสูง
     document.getElementById("qrcode").innerHTML = "";
     new QRCode(document.getElementById("qrcode"), {
-        text: finalPayload,
-        width: 250,
-        height: 250,
-        colorDark : "#003366",
+        text: finalQR,
+        width: 256,
+        height: 256,
+        colorDark : "#000000",
         colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.M
+        correctLevel : QRCode.CorrectLevel.H // ใช้ High Level เพื่อความแม่นยำในการสแกน
     });
 
-    console.log("Final Verified Payload:", finalPayload);
+    console.log("KHQR Standard Payload:", finalQR);
 }
 
 window.onload = generateKHQR;
-
-        initCheckout();
     </script>
 </body>
 </html>
