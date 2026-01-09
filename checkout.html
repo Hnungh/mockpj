@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ชำระเงิน - BARDS by P.LOK</title>
+    <title>Payment - BARDS by P.LOK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -15,26 +15,26 @@
             <a href="cart.html" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-600">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
-            <h1 class="text-2xl font-bold text-slate-800">ยืนยันคำสั่งซื้อ</h1>
+            <h1 class="text-2xl font-bold text-slate-800">Checkout</h1>
         </div>
 
         <div class="bg-white rounded-3xl p-6 shadow-sm mb-6 border border-slate-100">
-            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">สรุปยอดที่ต้องชำระ</h2>
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Payment Summary</h2>
             <div class="flex justify-between items-end">
                 <div>
                     <p class="text-4xl font-black text-blue-600" id="final-total-display">$0.00</p>
-                    <p class="text-xs text-slate-400 mt-1">* รวมค่าจัดส่ง $2.00 แล้ว</p>
+                    <p class="text-xs text-slate-400 mt-1">* Includes $2.00 shipping fee</p>
                 </div>
                 <button onclick="copyAmount()" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition">
-                    <i class="fa-regular fa-copy mr-2"></i> คัดลอกยอดเงิน
+                    <i class="fa-regular fa-copy mr-2"></i> Copy Amount
                 </button>
             </div>
         </div>
 
         <div class="bg-white rounded-3xl p-8 shadow-md text-center border-t-4 border-blue-600 mb-6">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/ABA_Bank_Logo.png/600px-ABA_Bank_Logo.png" class="h-8 mx-auto mb-4">
-            <h3 class="font-bold text-slate-700 mb-1">สแกนเพื่อจ่ายเงิน (KHQR)</h3>
-            <p class="text-xs text-slate-400 mb-6">ระบุยอดเงินให้ตรงกับด้านบนเพื่อความรวดเร็ว</p>
+            <h3 class="font-bold text-slate-700 mb-1">Scan to Pay (KHQR)</h3>
+            <p class="text-xs text-slate-400 mb-6">Please enter the exact amount shown above</p>
 
             <div class="flex justify-center mb-6">
                 <div id="qrcode" class="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-inner"></div>
@@ -42,11 +42,11 @@
 
             <div class="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600 text-left space-y-2">
                 <div class="flex justify-between">
-                    <span>ชื่อบัญชี:</span>
+                    <span>Account Name:</span>
                     <span class="font-bold text-slate-800">BARDS by P.LOK</span>
                 </div>
                 <div class="flex justify-between">
-                    <span>ธนาคาร:</span>
+                    <span>Bank:</span>
                     <span class="font-bold text-slate-800 text-blue-600">ABA Bank</span>
                 </div>
             </div>
@@ -54,14 +54,14 @@
 
         <div class="bg-white rounded-3xl p-6 shadow-sm mb-8 border border-slate-100">
             <label class="block text-slate-700 font-bold mb-4">
-                <i class="fa-solid fa-file-invoice-dollar mr-2 text-blue-500"></i> แนบหลักฐานการโอนเงิน
+                <i class="fa-solid fa-file-invoice-dollar mr-2 text-blue-500"></i> Upload Payment Receipt
             </label>
             <div class="relative">
                 <input type="file" id="slip-input" accept="image/*" class="hidden" onchange="previewSlip(event)">
                 <label for="slip-input" id="drop-zone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition">
                     <div id="preview-container" class="flex flex-col items-center">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-400">กดเพื่อเลือกรูปภาพสลิป</p>
+                        <p class="text-sm text-slate-400">Click to upload your slip</p>
                     </div>
                     <img id="slip-preview" class="hidden h-full w-full object-contain p-2 rounded-2xl">
                 </label>
@@ -69,12 +69,12 @@
         </div>
 
         <button onclick="processOrder()" id="btn-submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition shadow-xl disabled:opacity-50">
-            ยืนยันการสั่งซื้อและส่งสลิป
+            Confirm Order & Send Slip
         </button>
     </div>
 
     <script>
-        // โหลดข้อมูลยอดเงิน
+        // Load Total Amount
         const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
         const total = (subtotal + 2).toFixed(2);
         
@@ -84,7 +84,6 @@
         }
 
         function generateQR() {
-            // ใช้ String แบบธรรมดาที่คุณให้มา เพราะสแกนติดแน่นอน 100%
             const staticQR = "00020101021130510016abaakhppxxx@abaa01151250719163741160208ABA Bank5204539953031165802KH5914BARDS by P.LOK6009SIEM REAP624768430010PAYWAY@ABA01071407908020903188932305011630496F9";
 
             new QRCode(document.getElementById("qrcode"), {
@@ -98,7 +97,7 @@
 
         function copyAmount() {
             navigator.clipboard.writeText(total);
-            alert("คัดลอกยอด $" + total + " แล้ว! อย่าลืมระบุยอดนี้ในแอป ABA นะครับ");
+            alert("Amount $" + total + " copied! Please use this exact amount in your ABA app.");
         }
 
         function previewSlip(event) {
@@ -118,15 +117,15 @@
         async function processOrder() {
             const slipInput = document.getElementById('slip-input');
             if (!slipInput.files[0]) {
-                alert("กรุณาแนบรูปสลิปเพื่อยืนยันการชำระเงินครับ");
+                alert("Please upload your payment receipt to confirm the order.");
                 return;
             }
 
             const btn = document.getElementById('btn-submit');
-            btn.innerText = "กำลังประมวลผล...";
+            btn.innerText = "Processing...";
             btn.disabled = true;
 
-            // บันทึกออเดอร์ลง LocalStorage (จำลอง Backend)
+            // Save order to LocalStorage
             const reader = new FileReader();
             reader.readAsDataURL(slipInput.files[0]);
             reader.onload = function() {
@@ -141,7 +140,7 @@
                 orders.push(order);
                 localStorage.setItem('orders', JSON.stringify(orders));
 
-                // ไปหน้า Success
+                // Redirect to Success page
                 setTimeout(() => {
                     window.location.href = "success.html";
                 }, 1000);
