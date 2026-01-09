@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Success - TECH-X</title>
+    <title>Order Success - BARDS by P.LOK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -19,63 +19,60 @@
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 border-4 border-green-500 rounded-full animate-ping opacity-20"></div>
             </div>
 
-            <h1 class="text-3xl font-black text-gray-800 mb-2">ขอบคุณสำหรับการสั่งซื้อ!</h1>
-            <p class="text-gray-500 mb-8">เราได้รับหลักฐานการโอนเงินของท่านแล้ว และกำลังดำเนินการตรวจสอบ</p>
+            <h1 class="text-3xl font-black text-gray-800 mb-2">Thank You!</h1>
+            <p class="text-gray-500 mb-8">We have received your payment receipt. Our team is currently verifying your order.</p>
 
             <div class="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
                 <div class="flex justify-between items-center border-b border-dashed pb-3">
-                    <span class="text-gray-500 text-sm">หมายเลขคำสั่งซื้อ:</span>
+                    <span class="text-gray-500 text-sm">Order Number:</span>
                     <span id="display-order-id" class="font-bold text-gray-800">#ORD-000000</span>
                 </div>
                 <div class="flex justify-between items-center pt-1">
-                    <span class="text-gray-500 text-sm">ยอดรวมที่ชำระ:</span>
+                    <span class="text-gray-500 text-sm">Total Paid:</span>
                     <span id="display-total" class="font-bold text-blue-600 text-lg">$0.00</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-500 text-sm">สถานะ:</span>
-                    <span class="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-1 rounded-full font-bold uppercase">รอดำเนินการ (Pending)</span>
+                    <span class="text-gray-500 text-sm">Status:</span>
+                    <span class="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-1 rounded-full font-bold uppercase">Pending Verification</span>
                 </div>
             </div>
 
             <div class="space-y-3">
                 <button onclick="clearAndGoHome()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition shadow-lg">
-                    กลับไปช้อปปิ้งต่อ
+                    Continue Shopping
                 </button>
-                <a href="admin.html" class="block w-full text-blue-600 font-medium hover:underline text-sm">
-                    ดูประวัติการสั่งซื้อของฉัน
-                </a>
             </div>
         </div>
     </main>
 
     <footer class="p-6 text-center text-gray-400 text-xs">
-        <p>&copy; 2024 TECH-X Store. All rights reserved.</p>
+        <p>&copy; 2024 BARDS by P.LOK. All rights reserved.</p>
     </footer>
 
     <script>
         function loadOrderDetails() {
-            // ดึงข้อมูลออเดอร์ล่าสุดจากรายการออเดอร์ทั้งหมด
+            // Fetch the latest order from LocalStorage
             const orders = JSON.parse(localStorage.getItem('orders')) || [];
             
             if (orders.length > 0) {
-                const lastOrder = orders[orders.length - 1]; // เอาออเดอร์ล่าสุด
+                const lastOrder = orders[orders.length - 1]; // Get the most recent order
                 
                 document.getElementById('display-order-id').innerText = "#" + lastOrder.orderID;
                 document.getElementById('display-total').innerText = lastOrder.total;
             } else {
-                // หากไม่มีข้อมูล ให้เด้งกลับหน้าแรก
+                // If no order data is found, redirect back to home
                 window.location.href = "index.html";
             }
         }
 
         function clearAndGoHome() {
-            // ล้างตะกร้าสินค้าหลังจากซื้อเสร็จแล้ว
+            // Clear cart data after successful purchase
             localStorage.removeItem('cart');
             localStorage.removeItem('finalTotal');
             window.location.href = "index.html";
         }
 
-        // รันฟังก์ชันเมื่อโหลดหน้า
+        // Initialize on page load
         window.onload = loadOrderDetails;
     </script>
 </body>
