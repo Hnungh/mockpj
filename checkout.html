@@ -2,97 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Secure Checkout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ชำระเงิน - LOHA by P.LOK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-6 max-w-4xl grid md:grid-cols-2 gap-8">
-        
-        <div class="bg-white p-8 rounded-2xl shadow-sm">
-            <h2 class="text-2xl font-bold mb-6">Summary</h2>
-            <div id="checkout-items" class="space-y-4 mb-6"></div>
-            <div class="border-t pt-4 space-y-2">
-                <div class="flex justify-between"><span>Subtotal:</span> <span id="subtotal">$0.00</span></div>
-                <div class="flex justify-between text-green-600"><span>Shipping:</span> <span>$0.01</span></div>
-                <div class="flex justify-between text-2xl font-bold border-t pt-2">
-                    <span>Total:</span> <span id="final-total" class="text-blue-600">$0.00</span>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <div class="container mx-auto px-4 pt-8 max-w-lg">
+        <div class="flex items-center gap-4 mb-8">
+            <a href="cart.html" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-600">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <h1 class="text-2xl font-bold text-slate-800">ยืนยันคำสั่งซื้อ</h1>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-sm mb-6 border border-slate-100">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">สรุปยอดที่ต้องชำระ</h2>
+            <div class="flex justify-between items-end">
+                <div>
+                    <p class="text-4xl font-black text-blue-600" id="final-total-display">$0.00</p>
+                    <p class="text-xs text-slate-400 mt-1">* รวมค่าจัดส่ง $2.00 แล้ว</p>
+                </div>
+                <button onclick="copyAmount()" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition">
+                    <i class="fa-regular fa-copy mr-2"></i> คัดลอกยอดเงิน
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-8 shadow-md text-center border-t-4 border-blue-600 mb-6">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/ABA_Bank_Logo.png/600px-ABA_Bank_Logo.png" class="h-8 mx-auto mb-4">
+            <h3 class="font-bold text-slate-700 mb-1">สแกนเพื่อจ่ายเงิน (KHQR)</h3>
+            <p class="text-xs text-slate-400 mb-6">ระบุยอดเงินให้ตรงกับด้านบนเพื่อความรวดเร็ว</p>
+
+            <div class="flex justify-center mb-6">
+                <div id="qrcode" class="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-inner"></div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600 text-left space-y-2">
+                <div class="flex justify-between">
+                    <span>ชื่อบัญชี:</span>
+                    <span class="font-bold text-slate-800">LOHA by P.LOK</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>ธนาคาร:</span>
+                    <span class="font-bold text-slate-800 text-blue-600">ABA Bank</span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white p-8 rounded-2xl shadow-sm text-center">
-            <h2 class="text-2xl font-bold mb-4">Payment (KHQR)</h2>
-            <div id="qrcode" class="flex justify-center mb-6 p-4 border rounded-xl bg-gray-50"></div>
-            
-            <div class="mb-6">
-                <label class="block text-left text-sm font-medium text-gray-700 mb-2">Upload Payment Slip</label>
-                <input type="file" id="slip-input" accept="image/*" class="w-full p-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+        <div class="bg-white rounded-3xl p-6 shadow-sm mb-8 border border-slate-100">
+            <label class="block text-slate-700 font-bold mb-4">
+                <i class="fa-solid fa-file-invoice-dollar mr-2 text-blue-500"></i> แนบหลักฐานการโอนเงิน
+            </label>
+            <div class="relative">
+                <input type="file" id="slip-input" accept="image/*" class="hidden" onchange="previewSlip(event)">
+                <label for="slip-input" id="drop-zone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition">
+                    <div id="preview-container" class="flex flex-col items-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-300 mb-2"></i>
+                        <p class="text-sm text-slate-400">กดเพื่อเลือกรูปภาพสลิป</p>
+                    </div>
+                    <img id="slip-preview" class="hidden h-full w-full object-contain p-2 rounded-2xl">
+                </label>
             </div>
-
-            <button onclick="placeOrder()" id="btn-submit" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition">
-                Confirm & Send Order
-            </button>
         </div>
+
+        <button onclick="processOrder()" id="btn-submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition shadow-xl disabled:opacity-50">
+            ยืนยันการสั่งซื้อและส่งสลิป
+        </button>
     </div>
 
     <script>
-        // ฟังก์ชันคำนวณ CRC16 ที่แม่นยำที่สุดสำหรับ ABA/PayWay
-function crc16(data) {
-    let crc = 0xFFFF;
-    for (let i = 0; i < data.length; i++) {
-        let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
-        x ^= x >> 4;
-        crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
-    }
-    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-}
+        // โหลดข้อมูลยอดเงิน
+        const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
+        const total = (subtotal + 2).toFixed(2);
+        
+        function init() {
+            document.getElementById('final-total-display').innerText = `$${total}`;
+            generateQR();
+        }
 
-function generateKHQR() {
-    const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
-    const shipping = 2.00;
-    const total = (subtotal + shipping).toFixed(2);
+        function generateQR() {
+            // ใช้ String แบบธรรมดาที่คุณให้มา เพราะสแกนติดแน่นอน 100%
+            const staticQR = "00020101021130510016abaakhppxxx@abaa01151250719163741160208ABA Bank5204539953038405802KH5913LOHA by P.LOK6009SIEM REAP624768430010PAYWAY@ABA010714079080209031889323050116304905C";
 
-    // ข้อมูลจาก String ต้นฉบับที่คุณให้มา
-    const bakongID = "abaakhppxxx@abaa"; // รหัสบัญชีจาก Tag 30
-    const merchantName = "LOHA by P.LOK";
-    const city = "SIEM REAP";
+            new QRCode(document.getElementById("qrcode"), {
+                text: staticQR,
+                width: 200,
+                height: 200,
+                colorDark: "#0f172a",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
 
-    // --- โครงสร้างที่ PayWay/ABA ยอมรับ (เรียงตาม EMVCo 2.0) ---
-    let payload = "000201"; // Payload Version
-    payload += "010212";   // 12 = Dynamic (สำคัญมาก)
-    
-    // Tag 30: Merchant Info (ต้องใส่ bakong.kh นำหน้า)
-    let tag30 = "0009bakong.kh" + "01" + bakongID.length.toString().padStart(2, '0') + bakongID;
-    payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
-    
-    payload += "52045399"; // MCC
-    payload += "5303840"; // USD
-    
-    // Tag 54: Amount (ส่วนที่ทำให้ยอดเงินขึ้นอัตโนมัติ)
-    payload += "54" + total.length.toString().padStart(2, '0') + total;
-    
-    payload += "5802KH"; // Country
-    payload += "59" + merchantName.length.toString().padStart(2, '0') + merchantName;
-    payload += "60" + city.length.toString().padStart(2, '0') + city;
-    
-    // **จุดสำคัญ**: หากเป็นแบบ Merchant ปกติ เราจะข้าม Tag 62 ไป 
-    // เพื่อให้แอปธนาคารสร้างรหัสธุรกรรมใหม่เอง (General KHQR)
-    
-    payload += "6304"; // Tag CRC
+        function copyAmount() {
+            navigator.clipboard.writeText(total);
+            alert("คัดลอกยอด $" + total + " แล้ว! อย่าลืมระบุยอดนี้ในแอป ABA นะครับ");
+        }
 
-    const finalQR = payload + crc16(payload);
+        function previewSlip(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-container').classList.add('hidden');
+                    const img = document.getElementById('slip-preview');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
 
-    // แสดงผล
-    document.getElementById("qrcode").innerHTML = "";
-    new QRCode(document.getElementById("qrcode"), {
-        text: finalQR,
-        width: 256,
-        height: 256,
-        colorDark : "#003366",
-        correctLevel : QRCode.CorrectLevel.M
-    });
-}
+        async function processOrder() {
+            const slipInput = document.getElementById('slip-input');
+            if (!slipInput.files[0]) {
+                alert("กรุณาแนบรูปสลิปเพื่อยืนยันการชำระเงินครับ");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "กำลังประมวลผล...";
+            btn.disabled = true;
+
+            // บันทึกออเดอร์ลง LocalStorage (จำลอง Backend)
+            const reader = new FileReader();
+            reader.readAsDataURL(slipInput.files[0]);
+            reader.onload = function() {
+                const order = {
+                    orderID: "ORD-" + Math.floor(100000 + Math.random() * 900000),
+                    total: "$" + total,
+                    slip: reader.result,
+                    date: new Date().toLocaleString()
+                };
+
+                const orders = JSON.parse(localStorage.getItem('orders')) || [];
+                orders.push(order);
+                localStorage.setItem('orders', JSON.stringify(orders));
+
+                // ไปหน้า Success
+                setTimeout(() => {
+                    window.location.href = "success.html";
+                }, 1000);
+            };
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
