@@ -37,7 +37,7 @@
     </div>
 
     <script>
-        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE (มาตรฐานสากล)
+        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE ตามมาตรฐาน EMVCo
 function crc16(data) {
     let crc = 0xFFFF;
     for (let i = 0; i < data.length; i++) {
@@ -49,52 +49,30 @@ function crc16(data) {
 }
 
 function generateKHQR() {
-    // 1. ดึงยอดเงินจากระบบ (สมมติเป็น USD ตามที่คุณให้มา)
+    // 1. ดึงยอดเงินจากระบบ
     const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
-    const shipping = 0.01;
-    const total = (subtotal + shipping).toFixed(2); // ยอดสุทธิ เช่น 12.00
-    
+    const shipping = 2.00;
+    const total = (subtotal + shipping).toFixed(2); // เช่น 1011.00
+
     document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
     document.getElementById('final-total').innerText = `$${total}`;
 
-    // 2. ข้อมูลคงที่จาก ABA Merchant ของคุณ (ถอดรหัสจาก String ที่คุณส่งมา)
-    const tag30 = "0016abaakhppxxx@abaa01151250719163741160208ABA Bank";
-    const tag52 = "5399";
-    const tag53 = "840"; // 840 = USD, 116 = KHR
-    const tag58 = "KH";
-    const tag59 = "BARDS";
-    const tag60 = "SIEM REAP";
-    const tag62 = "0010PAYWAY@ABA010714079080209031889323050116";
+    // 2. ใช้โครงสร้าง String จากต้นฉบับที่คุณให้มา (USD Version)
+    // ผมจะแยกส่วนก่อนและหลังส่วนที่จะแทรก Amount
+    
+    const part1 = "00020101021130510016abaakhppxxx@abaa01151250719163741160208ABA Bank520453995303840";
+    const amountTag = "54" + total.length.toString().padStart(2, '0') + total;
+    const part2 = "5802KH5913BARDS6009SIEM REAP624768430010PAYWAY@ABA010714079080209031889323050116";
+    const crcTag = "6304";
 
-    // 3. ประกอบ Payload ตามลำดับ
-    let payload = "000201"; // Payload Indicator
-    payload += "010212";   // 12 = Dynamic (ระบุจำนวนเงิน)
-    
-    // Merchant Account Information
-    payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
-    
-    // ข้อมูลร้านค้าและหมวดหมู่
-    payload += "5204" + tag52;
-    payload += "5303" + tag53;
-    
-    // ยอดเงิน (Tag 54) - นี่คือส่วนที่ระบบจะคำนวณให้
-    payload += "54" + total.length.toString().padStart(2, '0') + total;
-    
-    payload += "5802" + tag58;
-    payload += "59" + tag59.length.toString().padStart(2, '0') + tag59;
-    payload += "60" + tag60.length.toString().padStart(2, '0') + tag60;
-    
-    // Additional Data Field (Tag 62)
-    payload += "62" + tag62.length.toString().padStart(2, '0') + tag62;
-    
-    // CRC Tag (Tag 63)
-    payload += "6304";
+    // 3. ประกอบร่าง: ส่วนแรก + ยอดเงิน + ส่วนหลัง + แท็ก CRC
+    const stringToCalculate = part1 + amountTag + part2 + crcTag;
 
-    // 4. คำนวณ Checksum สุดท้าย
-    const finalPayload = payload + crc16(payload);
+    // 4. คำนวณ Checksum จาก String ทั้งหมด
+    const finalPayload = stringToCalculate + crc16(stringToCalculate);
 
-    // 5. สร้าง QR Code
-    document.getElementById("qrcode").innerHTML = ""; // ล้างค่าเก่า
+    // 5. แสดงผล QR Code
+    document.getElementById("qrcode").innerHTML = "";
     new QRCode(document.getElementById("qrcode"), {
         text: finalPayload,
         width: 250,
@@ -104,10 +82,9 @@ function generateKHQR() {
         correctLevel : QRCode.CorrectLevel.M
     });
 
-    console.log("New KHQR Payload:", finalPayload);
+    console.log("Final Verified Payload:", finalPayload);
 }
 
-// เรียกใช้งานเมื่อหน้าโหลด
 window.onload = generateKHQR;
 
         initCheckout();
