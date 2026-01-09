@@ -3,43 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart - TECH-X</title>
+    <title>Your Cart - BARDS by P.LOK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-sm p-4">
         <div class="container mx-auto px-6 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-blue-600">TECH-X</a>
-            <a href="index.html" class="text-gray-600 hover:text-blue-600"><i class="fa-solid fa-arrow-left"></i> กลับไปช้อปปิ้ง</a>
+            <a href="index.html" class="text-2xl font-bold text-blue-600">BARDS by P.LOK</a>
+            <a href="index.html" class="text-gray-600 hover:text-blue-600">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Shopping
+            </a>
         </div>
     </nav>
 
     <main class="container mx-auto px-6 py-12 max-w-4xl">
-        <h1 class="text-3xl font-bold mb-8">ตะกร้าสินค้าของคุณ</h1>
+        <h1 class="text-3xl font-bold mb-8">Your Shopping Cart</h1>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-4" id="cart-items-container">
                 </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm h-fit">
-                <h2 class="text-xl font-bold mb-4">สรุปคำสั่งซื้อ</h2>
+                <h2 class="text-xl font-bold mb-4">Order Summary</h2>
                 <div class="space-y-3 border-b pb-4 mb-4">
                     <div class="flex justify-between text-gray-600">
-                        <span>ยอดรวมสินค้า</span>
+                        <span>Subtotal</span>
                         <span id="subtotal-display">$0.00</span>
                     </div>
                     <div class="flex justify-between text-gray-600">
-                        <span>ค่าจัดส่ง</span>
+                        <span>Shipping</span>
                         <span id="shipping-display">$2.00</span>
                     </div>
                 </div>
                 <div class="flex justify-between text-xl font-bold mb-6">
-                    <span>ยอดสุทธิ</span>
+                    <span>Total</span>
                     <span id="total-display" class="text-blue-600">$0.00</span>
                 </div>
                 <button onclick="goToCheckout()" id="checkout-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-                    ไปที่หน้าชำระเงิน
+                    Proceed to Checkout
                 </button>
             </div>
         </div>
@@ -55,8 +57,8 @@
                 container.innerHTML = `
                     <div class="bg-white p-12 rounded-2xl text-center shadow-sm">
                         <i class="fa-solid fa-cart-shopping text-5xl text-gray-200 mb-4"></i>
-                        <p class="text-gray-500">ตะกร้าของคุณยังว่างเปล่า</p>
-                        <a href="index.html" class="inline-block mt-4 text-blue-600 font-bold">ไปเลือกสินค้ากันเลย!</a>
+                        <p class="text-gray-500">Your cart is currently empty</p>
+                        <a href="index.html" class="inline-block mt-4 text-blue-600 font-bold">Start Shopping!</a>
                     </div>`;
                 checkoutBtn.disabled = true;
                 checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -64,7 +66,7 @@
                 return;
             }
 
-            // แสดงรายการสินค้า (Group สินค้าที่เหมือนกัน)
+            // Group identical items and show quantity
             const groupedCart = cart.reduce((acc, item) => {
                 const found = acc.find(x => x.id === item.id);
                 if (found) { found.qty += 1; } 
@@ -80,11 +82,11 @@
                         <p class="text-blue-600 font-bold">$${item.price.toLocaleString()}</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="changeQty(${item.id}, -1)" class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100">-</button>
-                        <span class="font-bold">${item.qty}</span>
-                        <button onclick="changeQty(${item.id}, 1)" class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100">+</button>
+                        <button onclick="changeQty(${item.id}, -1)" class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition">-</button>
+                        <span class="font-bold w-4 text-center">${item.qty}</span>
+                        <button onclick="changeQty(${item.id}, 1)" class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition">+</button>
                     </div>
-                    <button onclick="removeItem(${item.id})" class="text-red-400 hover:text-red-600 p-2">
+                    <button onclick="removeItem(${item.id})" class="text-red-400 hover:text-red-600 p-2 transition">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -97,16 +99,18 @@
         function updateSummary(subtotal) {
             const shipping = subtotal > 0 ? 2 : 0;
             const total = subtotal + shipping;
-            document.getElementById('subtotal-display').innerText = `$${subtotal.toLocaleString()}`;
-            document.getElementById('total-display').innerText = `$${total.toLocaleString()}`;
-            localStorage.setItem('finalTotal', subtotal); // ส่งยอดเฉพาะราคาสินค้าไปให้ checkout คำนวณต่อ
+            document.getElementById('subtotal-display').innerText = `$${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('total-display').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            
+            // Store subtotal for checkout calculation
+            localStorage.setItem('finalTotal', subtotal);
         }
 
         function changeQty(id, delta) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             if (delta === 1) {
                 const product = cart.find(p => p.id === id);
-                cart.push({...product});
+                if(product) cart.push({...product});
             } else {
                 const index = cart.findIndex(p => p.id === id);
                 if (index > -1) cart.splice(index, 1);
