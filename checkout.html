@@ -37,80 +37,62 @@
     </div>
 
     <script>
-        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE (มาตรฐานสูงสุดของ EMVCo)
+        // ฟังก์ชันคำนวณ CRC16 ที่แม่นยำที่สุดสำหรับ ABA/PayWay
 function crc16(data) {
     let crc = 0xFFFF;
-    const polynomial = 0x1021;
     for (let i = 0; i < data.length; i++) {
-        let b = data.charCodeAt(i);
-        for (let j = 0; j < 8; j++) {
-            let bit = ((b >> (7 - j) & 1) == 1);
-            let c15 = ((crc >> 15 & 1) == 1);
-            crc <<= 1;
-            if (c15 ^ bit) crc ^= polynomial;
-        }
+        let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
+        x ^= x >> 4;
+        crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
     }
-    crc &= 0xFFFF;
-    return crc.toString(16).toUpperCase().padStart(4, '0');
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 }
 
 function generateKHQR() {
-    // 1. คำนวณยอดเงินสุทธิ
     const subtotal = parseFloat(localStorage.getItem('finalTotal')) || 0;
     const shipping = 2.00;
-    const total = (subtotal + shipping).toFixed(2); // ต้องมี .00 เสมอ
+    const total = (subtotal + shipping).toFixed(2);
 
-    document.getElementById('subtotal').innerText = `$${subtotal.toLocaleString()}`;
-    document.getElementById('final-total').innerText = `$${total}`;
-
-    // 2. ข้อมูลร้านค้า (จาก String ที่คุณส่งมา)
-    const merchantID = "abaakhppxxx@abaa"; // รหัสบัญชีคุณ
-    const merchantName = "BARDS";
+    // ข้อมูลจาก String ต้นฉบับที่คุณให้มา
+    const bakongID = "abaakhppxxx@abaa"; // รหัสบัญชีจาก Tag 30
+    const merchantName = "LOHA by P.LOK";
     const city = "SIEM REAP";
 
-    // 3. สร้างโครงสร้าง KHQR แบบ Dynamic (010212)
-    // Tag 00: Payload Version
-    // Tag 01: Point of Initiation (12 = Dynamic QR)
-    let payload = "000201010212";
-
-    // Tag 30: Merchant Information (โครงสร้างสำหรับ ABA/Bakong)
-    let tag30 = "0009bakong.kh"; 
-    tag30 += "01" + merchantID.length.toString().padStart(2, '0') + merchantID;
+    // --- โครงสร้างที่ PayWay/ABA ยอมรับ (เรียงตาม EMVCo 2.0) ---
+    let payload = "000201"; // Payload Version
+    payload += "010212";   // 12 = Dynamic (สำคัญมาก)
+    
+    // Tag 30: Merchant Info (ต้องใส่ bakong.kh นำหน้า)
+    let tag30 = "0009bakong.kh" + "01" + bakongID.length.toString().padStart(2, '0') + bakongID;
     payload += "30" + tag30.length.toString().padStart(2, '0') + tag30;
-
-    // Tag 52: Category Code
-    payload += "52045399";
-    // Tag 53: Currency (840 = USD)
-    payload += "5303840";
-    // Tag 54: Amount (ยอดเงินที่คำนวณ)
+    
+    payload += "52045399"; // MCC
+    payload += "5303840"; // USD
+    
+    // Tag 54: Amount (ส่วนที่ทำให้ยอดเงินขึ้นอัตโนมัติ)
     payload += "54" + total.length.toString().padStart(2, '0') + total;
-    // Tag 58: Country Code
-    payload += "5802KH";
-    // Tag 59: Merchant Name
+    
+    payload += "5802KH"; // Country
     payload += "59" + merchantName.length.toString().padStart(2, '0') + merchantName;
-    // Tag 60: Merchant City
     payload += "60" + city.length.toString().padStart(2, '0') + city;
-    // Tag 63: CRC Placeholder
-    payload += "6304";
+    
+    // **จุดสำคัญ**: หากเป็นแบบ Merchant ปกติ เราจะข้าม Tag 62 ไป 
+    // เพื่อให้แอปธนาคารสร้างรหัสธุรกรรมใหม่เอง (General KHQR)
+    
+    payload += "6304"; // Tag CRC
 
-    // 4. คำนวณ CRC16 และต่อท้าย
     const finalQR = payload + crc16(payload);
 
-    // 5. แสดงผล QR Code ด้วยความละเอียดสูง
+    // แสดงผล
     document.getElementById("qrcode").innerHTML = "";
     new QRCode(document.getElementById("qrcode"), {
         text: finalQR,
         width: 256,
         height: 256,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H // ใช้ High Level เพื่อความแม่นยำในการสแกน
+        colorDark : "#003366",
+        correctLevel : QRCode.CorrectLevel.M
     });
-
-    console.log("KHQR Standard Payload:", finalQR);
 }
-
-window.onload = generateKHQR;
     </script>
 </body>
 </html>
