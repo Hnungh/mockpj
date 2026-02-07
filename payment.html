@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABA KHQR Professional - BARDS</title>
+    <title>ABA KHQR Payment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white max-w-sm w-full rounded-[3rem] shadow-2xl p-8 border-t-[12px] border-[#003d7d]">
+    <div class="bg-white max-w-sm w-full rounded-[2.5rem] shadow-2xl p-8 border-t-[12px] border-[#003d7d]">
         <div class="text-center mb-6">
             <h2 class="text-xl font-bold text-[#003d7d]">ABA KHQR</h2>
-            <p class="text-gray-400 text-xs font-semibold uppercase tracking-widest">Official Merchant</p>
+            <p class="text-gray-400 text-xs uppercase tracking-widest">Scan to Pay</p>
         </div>
 
-        <div class="bg-white border-2 border-slate-50 rounded-[2.5rem] p-4 shadow-inner">
-            <div id="qrcode" class="flex justify-center py-2 min-h-[220px]"></div>
+        <div class="bg-white border-2 border-slate-50 rounded-[2rem] p-4 shadow-inner">
+            <div id="qrcode" class="flex justify-center py-2"></div>
             <div class="text-center mt-4">
                 <p class="text-4xl font-black text-slate-800" id="amt">$0.00</p>
             </div>
@@ -24,65 +24,62 @@
 
         <div class="mt-8 space-y-4">
             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <label class="text-[10px] font-bold text-blue-600 uppercase block mb-2 tracking-tight">Attach Receipt (แนบหลักฐานการโอน)</label>
-                <input type="file" id="slip" class="text-xs w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:bg-[#003d7d] file:text-white">
+                <label class="text-[10px] font-bold text-blue-600 uppercase block mb-2">Upload Slip (แนบสลิป)</label>
+                <input type="file" id="slip" class="text-xs w-full">
             </div>
 
-            <button onclick="submitOrder()" id="btn" class="w-full bg-[#003d7d] text-white py-5 rounded-3xl font-bold text-lg shadow-xl active:scale-95 transition-all">
-                CONFIRM ORDER
+            <button onclick="sendToTelegram()" id="btn" class="w-full bg-[#003d7d] text-white py-5 rounded-3xl font-bold text-lg shadow-lg active:scale-95 transition-all">
+                CONFIRM PAYMENT
             </button>
-            <p class="text-center text-[10px] text-gray-400 font-medium">BARDS by P.LOK | SIEM REAP</p>
+            <p class="text-center text-[10px] text-gray-400 uppercase tracking-widest">Merchant: BARDS by P.LOK</p>
         </div>
     </div>
 
     <script>
-        // ข้อมูล Telegram ของคุณ
+        // --- ส่วนที่ต้องเติม TOKEN ---
         const BOT_TOKEN = '7577129821:AAF-ZEZJakHhPaejHVKphfoSmBXQ2cK0qH0'; 
         const CHAT_ID = '7299129094'; 
 
-        // ฟังก์ชันหัวใจหลัก: จัดรูปแบบข้อมูลตามมาตรฐาน EMVCo (Tag + Length + Value)
-        const formatTag = (tag, value) => {
-            const valStr = String(value);
-            const len = valStr.length.toString().padStart(2, '0');
-            return tag + len + valStr;
-        };
-
-        function generateProfessionalKHQR() {
-            const rawAmount = localStorage.getItem('subtotal') || "1.00";
-            const amount = parseFloat(rawAmount).toFixed(2); // บังคับทศนิยม 2 ตำแหน่งเป๊ะๆ
+                function generateQR() {
+            // 1. ดึงยอดเงินและทำให้เป็นทศนิยม 2 ตำแหน่งเสมอ (เช่น 1.00)
+            let rawAmount = localStorage.getItem('subtotal') || "1.00";
+            let amount = parseFloat(rawAmount).toFixed(2); 
             document.getElementById('amt').innerText = "$" + amount;
 
-            // --- ประกอบโครงสร้าง KHQR ---
-            let payload = "000201"; // Payload Indicator
-            payload += "010212";   // Point of Initiation (12 = Dynamic)
+            const f = (tag, val) => tag + String(val).length.toString().padStart(2, '0') + val;
 
-            // Tag 30: Merchant Info (ถอดจากรหัสของคุณ)
-            const merchantData = formatTag("00", "abaakhppxxx@abaa") + formatTag("01", "1250719163741");
-            payload += formatTag("30", merchantData);
+            // --- เริ่มประกอบร่าง Payload ---
+            let p = "000201010212"; // 12 = Dynamic
 
-            payload += "160208ABA Bank"; // Tag 16: Bank Name
-            payload += "52045399";       // Tag 52: Merchant Category
-            payload += "5303840";        // Tag 53: Currency (840 = USD)
-            
-            payload += formatTag("54", amount); // Tag 54: ยอดเงิน (Dynamic)
+            // 2. Merchant Account Info (Tag 30)
+            // เพิ่ม Tag 0208ABA Bank เข้าไปข้างในเพื่อให้ระบบรู้ว่าเป็นธนาคารอะไร
+            const t30_inner = f("00", "abaakhppxxx@abaa") + f("01", "1250719163741");
+            p += f("30", t30_inner);
 
-            payload += "5802KH";                    // Tag 58: Country
-            payload += formatTag("59", "BARDS by P.LOK"); // Tag 59: Name
-            payload += formatTag("60", "SIEM REAP");      // Tag 60: City
+            // 3. ข้อมูลพื้นฐานที่ต้องมีให้ครบ
+            p += "160208ABA Bank"; // Tag 16 (ชื่อธนาคาร)
+            p += "52045399";       // Tag 52 (ประเภทธุรกิจ)
+            p += "5303840";        // Tag 53 (สกุลเงิน USD)
+            p += f("54", amount);  // Tag 54 (ยอดเงินที่สแกนติด)
+            p += "5802KH";         // Tag 58 (ประเทศ)
+            p += f("59", "BARDS by P.LOK"); // Tag 59 (ชื่อร้าน)
+            p += f("60", "SIEM REAP");      // Tag 60 (เมือง)
 
-            // Tag 62: Additional Data (ชุดรหัส PayWay ของคุณ)
-            const tag62Content = formatTag("00", "PAYWAY@ABA") + 
-                                 formatTag("01", "1407908") + 
-                                 "0209031889323" + 
-                                 "0619889144781438033758P";
-            payload += formatTag("62", tag62Content);
+            // 4. ข้อมูล Additional (Tag 62) ** จุดที่ทำให้ Merchant Data ผ่านหรือไม่ผ่าน **
+            // เราต้องใส่ชุดรหัสยาวๆ ที่คุณเคยส่งมาให้ครบ เพราะแอป ABA จะเช็คความถูกต้องของรหัสตรงนี้
+            const t62_inner = f("00", "PAYWAY@ABA") + 
+                            f("01", "1407908") + 
+                            "0209031889323" + 
+                            "0619889144781438033758P";
+            p += f("62", t62_inner);
 
-            // Tag 99: Custom ABA Data
-            payload += formatTag("99", "0013177044781438001131770448114380");
+            // 5. ข้อมูลจำเพาะของ ABA (Tag 99)
+            const t99_inner = "0013177044781438001131770448114380";
+            p += f("99", t99_inner);
 
-            // Tag 63: Checksum
-            payload += "6304";
-            const finalPayload = payload + calculateCRC16(payload);
+            // 6. ปิดท้ายด้วย CRC16
+            p += "6304";
+            const finalPayload = p + calculateCRC16(p);
 
             // สร้าง QR Code
             document.getElementById("qrcode").innerHTML = "";
@@ -93,11 +90,8 @@
                 colorDark : "#003d7d",
                 correctLevel : QRCode.CorrectLevel.M
             });
-
-            console.log("Verified KHQR:", finalPayload);
         }
 
-        // ฟังก์ชันคำนวณ CRC16 CCITT-FALSE
         function calculateCRC16(data) {
             let crc = 0xFFFF;
             for (let i = 0; i < data.length; i++) {
@@ -105,21 +99,19 @@
                 x ^= x >> 4;
                 crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
             }
-            return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+            return crc.toString(16).toUpperCase().padStart(4, '0');
         }
 
-        async function submitOrder() {
+        async function sendToTelegram() {
             const btn = document.getElementById('btn');
             const slip = document.getElementById('slip').files[0];
             const info = JSON.parse(localStorage.getItem('customer') || "{}");
             const total = localStorage.getItem('subtotal');
 
-            btn.disabled = true;
-            btn.innerText = "Sending Notification...";
-
-            const text = `🚀 *New Order Inbound!*\n\n💰 *Total:* $${total}\n👤 *Name:* ${info.name}\n📞 *Phone:* ${info.phone}\n📍 *Address:* ${info.address}`;
+            btn.disabled = true; btn.innerText = "Processing...";
 
             try {
+                const text = `🔔 *New Order Received*\n💰 Total: $${total}\n👤 Name: ${info.name}\n📞 Tel: ${info.phone}`;
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
                 
                 if(slip) {
@@ -128,18 +120,12 @@
                     fd.append('photo', slip);
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
                 }
-
-                alert("Success! Your order is being processed.");
-                localStorage.clear();
-                window.location.href = 'index.html';
-            } catch(e) {
-                alert("Order recorded, but notification failed. Please contact us.");
-                btn.disabled = false;
-                btn.innerText = "CONFIRM ORDER";
-            }
+                alert("Order Placed!"); window.location.href = 'index.html';
+            } catch(e) { alert("Check Connection"); btn.disabled = false; }
         }
 
-        window.onload = generateProfessionalKHQR;
+        window.onload = generateQR;
     </script>
 </body>
 </html>
+ อันนี้ฉันสนใจเพราะเเสกนติดเเล้ว ขึ้นยอดเงินอัตโนมัติเเล้ว เเต่ขึ้นว่า invalid QR merchant data คืออะไรน่าสนใจอีก มาจากเลขไม่ถูกหรือว่าอะไร
