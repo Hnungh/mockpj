@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABA Payment - BARDS</title>
+    <title>ABA KHQR Payment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white max-w-sm w-full rounded-[3rem] shadow-2xl p-8 border-t-[12px] border-blue-900">
+    <div class="bg-white max-w-sm w-full rounded-[2.5rem] shadow-2xl p-8 border-t-[12px] border-[#003d7d]">
         <div class="text-center mb-6">
-            <h2 class="text-xl font-bold text-blue-900">ABA KHQR</h2>
-            <p class="text-gray-400 text-xs">Scan to Pay</p>
+            <h2 class="text-xl font-bold text-[#003d7d]">ABA KHQR</h2>
+            <p class="text-gray-400 text-xs uppercase tracking-widest">Scan to Pay</p>
         </div>
 
-        <div class="bg-white border-2 border-blue-50 rounded-[2.5rem] p-4 shadow-inner">
+        <div class="bg-white border-2 border-slate-50 rounded-[2rem] p-4 shadow-inner">
             <div id="qrcode" class="flex justify-center py-2"></div>
-            
             <div class="text-center mt-4">
                 <p class="text-4xl font-black text-slate-800" id="amt">$0.00</p>
             </div>
         </div>
 
-        <div class="mt-6 space-y-4">
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <label class="text-[10px] font-black text-blue-600 uppercase block mb-2">Attach Receipt (ส่งสลิป)</label>
+        <div class="mt-8 space-y-4">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <label class="text-[10px] font-bold text-blue-600 uppercase block mb-2">Upload Slip (แนบสลิป)</label>
                 <input type="file" id="slip" class="text-xs w-full">
             </div>
 
-            <button onclick="sendNotification()" id="btn" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-blue-100 active:scale-95 transition-all">
+            <button onclick="sendToTelegram()" id="btn" class="w-full bg-[#003d7d] text-white py-5 rounded-3xl font-bold text-lg shadow-lg active:scale-95 transition-all">
                 CONFIRM PAYMENT
             </button>
             <p class="text-center text-[10px] text-gray-400 uppercase tracking-widest">Merchant: BARDS by P.LOK</p>
@@ -37,35 +36,46 @@
     </div>
 
     <script>
-        // --- 1. ใส่ข้อมูล Telegram ของคุณตรงนี้ ---
-        const BOT_TOKEN = 'ใส่_TOKEN_ที่นี่'; 
-        const CHAT_ID = 'ใส่_CHAT_ID_ที่นี่'; 
-        // ------------------------------------
+        // --- ส่วนที่ต้องเติม TOKEN ---
+        const BOT_TOKEN = '7577129821:AAF-ZEZJakHhPaejHVKphfoSmBXQ2cK0qH0'; 
+        const CHAT_ID = '7299129094'; 
 
-        function initPayment() {
-            // ดึงยอดเงินจากหน้า Checkout
-            const subtotal = localStorage.getItem('subtotal') || "0.00";
-            document.getElementById('amt').innerText = "$" + subtotal;
+        function generateQR() {
+            const amount = localStorage.getItem('subtotal') || "1.00";
+            document.getElementById('amt').innerText = "$" + amount;
 
-            // สร้าง KHQR String (ใช้แบบ Static Template ที่ปลอดภัยกว่า)
-            // เราจะประกอบ Tag ตามที่คุณส่งมา แต่เปลี่ยน Tag 54 เป็นยอดเงินจริง
-            let amountStr = String(subtotal);
-            let amountTag = "54" + amountStr.length.toString().padStart(2, '0') + amountStr;
+            // ฟังก์ชันช่วยจัดรูปแบบ Tag: Tag + Length + Value
+            const f = (tag, val) => tag + String(val).length.toString().padStart(2, '0') + val;
 
-            let basePayload = "00020101021230510016abaakhppxxx@abaa01151250719163741520453995303840";
-            basePayload += amountTag;
-            basePayload += "5802KH5914BARDS by P.LOK6009SIEM REAP62270010PAYWAY@ABA010714079086304";
+            // 1. ข้อมูลพื้นฐาน
+            let payload = "000201010212"; // 12 = Dynamic QR
 
-            const finalPayload = basePayload + calculateCRC16(basePayload);
+            // 2. Merchant Account Information (Tag 30) - ใช้ค่าจากที่คุณให้มา
+            const t30_val = f("00", "abaakhppxxx@abaa") + f("01", "1250719163741");
+            payload += f("30", t30_val);
 
-            // เคลียร์ค่าว่างก่อนสร้าง QR
+            // 3. ข้อมูลทั่วไป
+            payload += "52045399"; // MCC
+            payload += "5303840"; // Currency (840 = USD)
+            payload += f("54", amount); // ยอดเงิน
+            payload += "5802KH"; // Country
+            payload += f("59", "BARDS by P.LOK"); // Merchant Name
+            payload += f("60", "SIEM REAP"); // City
+
+            // 4. Additional Data (Tag 62) - ใส่เลขบัญชีคุณ 1407908
+            const t62_val = f("00", "PAYWAY@ABA") + f("01", "1407908");
+            payload += f("62", t62_val);
+
+            // 5. Checksum (Tag 63)
+            payload += "6304";
+            const finalPayload = payload + calculateCRC16(payload);
+
+            // สร้าง QR Code
             document.getElementById("qrcode").innerHTML = "";
-            
-            // เรียกใช้ Library สร้าง QR
             new QRCode(document.getElementById("qrcode"), {
                 text: finalPayload,
-                width: 200,
-                height: 200,
+                width: 220,
+                height: 220,
                 colorDark : "#003d7d",
                 correctLevel : QRCode.CorrectLevel.M
             });
@@ -78,44 +88,32 @@
                 x ^= x >> 4;
                 crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
             }
-            let result = crc.toString(16).toUpperCase();
-            return result.padStart(4, '0');
+            return crc.toString(16).toUpperCase().padStart(4, '0');
         }
 
-        async function sendNotification() {
+        async function sendToTelegram() {
             const btn = document.getElementById('btn');
             const slip = document.getElementById('slip').files[0];
             const info = JSON.parse(localStorage.getItem('customer') || "{}");
             const total = localStorage.getItem('subtotal');
 
-            btn.disabled = true;
-            btn.innerText = "Processing...";
-
-            const text = `💰 *New Order Alert*\nTotal: $${total}\nCustomer: ${info.name}\nTel: ${info.phone}`;
+            btn.disabled = true; btn.innerText = "Processing...";
 
             try {
-                // ส่งข้อความไป Telegram
+                const text = `🔔 *New Order Received*\n💰 Total: $${total}\n👤 Name: ${info.name}\n📞 Tel: ${info.phone}`;
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
                 
-                // ส่งรูปสลิป (ถ้ามี)
                 if(slip) {
                     const fd = new FormData();
                     fd.append('chat_id', CHAT_ID);
                     fd.append('photo', slip);
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
                 }
-
-                alert("Success! Order Sent.");
-                localStorage.clear();
-                window.location.href = 'index.html';
-            } catch(e) {
-                alert("Order recorded!");
-                window.location.href = 'index.html';
-            }
+                alert("Order Placed!"); window.location.href = 'index.html';
+            } catch(e) { alert("Check Connection"); btn.disabled = false; }
         }
 
-        // รันทันทีเมื่อหน้าโหลดเสร็จ
-        window.onload = initPayment;
+        window.onload = generateQR;
     </script>
 </body>
 </html>
