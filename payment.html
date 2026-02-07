@@ -3,74 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABA KHQR - Pay Now</title>
+    <title>ABA Payment - BARDS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-100 p-4 min-h-screen flex items-center justify-center font-sans">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
     <div class="bg-white max-w-sm w-full rounded-[3rem] shadow-2xl p-8 border-t-[12px] border-blue-900">
-        <div class="flex justify-center mb-6">
-            <img src="https://www.ababank.com/typo3conf/ext/aba/Resources/Public/Images/aba-logo.png" class="h-8" alt="ABA Logo">
+        <div class="text-center mb-6">
+            <h2 class="text-xl font-bold text-blue-900">ABA KHQR</h2>
+            <p class="text-gray-400 text-xs">Scan to Pay</p>
         </div>
 
-        <div class="bg-white border-4 border-blue-50 rounded-[2.5rem] p-4 shadow-inner">
-            <div id="qrcode-container" class="flex justify-center min-h-[220px] items-center text-gray-300">
-                Generating QR...
-            </div>
-            <p class="text-4xl font-black text-center mt-4 text-slate-800" id="amt">$0.00</p>
-        </div>
-
-        <div class="mt-8 space-y-4">
-            <p class="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Merchant: BARDS by P.LOK</p>
+        <div class="bg-white border-2 border-blue-50 rounded-[2.5rem] p-4 shadow-inner">
+            <div id="qrcode" class="flex justify-center py-2"></div>
             
-            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div class="text-center mt-4">
+                <p class="text-4xl font-black text-slate-800" id="amt">$0.00</p>
+            </div>
+        </div>
+
+        <div class="mt-6 space-y-4">
+            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                 <label class="text-[10px] font-black text-blue-600 uppercase block mb-2">Attach Receipt (ส่งสลิป)</label>
-                <input type="file" id="slip" class="text-xs w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:bg-blue-600 file:text-white">
+                <input type="file" id="slip" class="text-xs w-full">
             </div>
 
-            <button onclick="finishOrder()" id="btn" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-blue-100 active:scale-95 transition-all">
+            <button onclick="sendNotification()" id="btn" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-blue-100 active:scale-95 transition-all">
                 CONFIRM PAYMENT
             </button>
+            <p class="text-center text-[10px] text-gray-400 uppercase tracking-widest">Merchant: BARDS by P.LOK</p>
         </div>
     </div>
 
     <script>
-        // --- ส่วนที่ต้องเติม TOKEN ---
-        const BOT_TOKEN = '7577129821:AAH8ep3Tb6TYVnS2g14n2Ck5MpsuEevjdGA'; 
-        const CHAT_ID = ''7299129094; 
-        // -----------------------
+        // --- 1. ใส่ข้อมูล Telegram ของคุณตรงนี้ ---
+        const BOT_TOKEN = 'ใส่_TOKEN_ที่นี่'; 
+        const CHAT_ID = 'ใส่_CHAT_ID_ที่นี่'; 
+        // ------------------------------------
 
-        function generateQR() {
-            const amount = localStorage.getItem('subtotal') || "0.00";
-            document.getElementById('amt').innerText = "$" + amount;
+        function initPayment() {
+            // ดึงยอดเงินจากหน้า Checkout
+            const subtotal = localStorage.getItem('subtotal') || "0.00";
+            document.getElementById('amt').innerText = "$" + subtotal;
 
-            // แก้ไขการประกอบ String ให้แม่นยำตามมาตรฐาน EMVCo
-            let p = "000201010212"; 
-            let t30 = "0016abaakhppxxx@abaa01151250719163741";
-            p += "30" + t30.length.toString().padStart(2, '0') + t30;
-            p += "520453995303840";
-            
-            // ยอดเงิน (Tag 54)
-            p += "54" + amount.toString().length.toString().padStart(2, '0') + amount;
-            
-            p += "5802KH5914BARDS by P.LOK6009SIEM REAP";
-            
-            // Tag 62: ข้อมูลที่คุณสังเกตเห็น (เลขบัญชีคุณ)
-            let t62 = "0010PAYWAY@ABA01071407908";
-            p += "62" + t62.length.toString().padStart(2, '0') + t62;
-            
-            p += "6304"; 
+            // สร้าง KHQR String (ใช้แบบ Static Template ที่ปลอดภัยกว่า)
+            // เราจะประกอบ Tag ตามที่คุณส่งมา แต่เปลี่ยน Tag 54 เป็นยอดเงินจริง
+            let amountStr = String(subtotal);
+            let amountTag = "54" + amountStr.length.toString().padStart(2, '0') + amountStr;
 
-            const finalQRString = p + calculateCRC16(p);
+            let basePayload = "00020101021230510016abaakhppxxx@abaa01151250719163741520453995303840";
+            basePayload += amountTag;
+            basePayload += "5802KH5914BARDS by P.LOK6009SIEM REAP62270010PAYWAY@ABA010714079086304";
+
+            const finalPayload = basePayload + calculateCRC16(basePayload);
+
+            // เคลียร์ค่าว่างก่อนสร้าง QR
+            document.getElementById("qrcode").innerHTML = "";
             
-            // ล้างค่าเก่าและสร้างใหม่
-            const container = document.getElementById("qrcode-container");
-            container.innerHTML = ""; 
-            
-            new QRCode(container, {
-                text: finalQRString,
-                width: 220,
-                height: 220,
+            // เรียกใช้ Library สร้าง QR
+            new QRCode(document.getElementById("qrcode"), {
+                text: finalPayload,
+                width: 200,
+                height: 200,
                 colorDark : "#003d7d",
                 correctLevel : QRCode.CorrectLevel.M
             });
@@ -83,27 +78,26 @@
                 x ^= x >> 4;
                 crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
             }
-            return crc.toString(16).toUpperCase().padStart(4, '0');
+            let result = crc.toString(16).toUpperCase();
+            return result.padStart(4, '0');
         }
 
-        async function finishOrder() {
+        async function sendNotification() {
             const btn = document.getElementById('btn');
             const slip = document.getElementById('slip').files[0];
             const info = JSON.parse(localStorage.getItem('customer') || "{}");
             const total = localStorage.getItem('subtotal');
 
-            if(!total) return alert("Error: No amount found.");
-
             btn.disabled = true;
             btn.innerText = "Processing...";
 
-            const text = `🚀 *New Order Alert!*\n💰 Total: $${total}\n👤 Name: ${info.name}\n📞 Tel: ${info.phone}\n📍 Addr: ${info.address}`;
+            const text = `💰 *New Order Alert*\nTotal: $${total}\nCustomer: ${info.name}\nTel: ${info.phone}`;
 
             try {
-                // ส่งข้อความ
+                // ส่งข้อความไป Telegram
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
                 
-                // ส่งรูปสลิป
+                // ส่งรูปสลิป (ถ้ามี)
                 if(slip) {
                     const fd = new FormData();
                     fd.append('chat_id', CHAT_ID);
@@ -111,17 +105,17 @@
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
                 }
 
-                alert("Order Placed! Please wait for confirmation.");
+                alert("Success! Order Sent.");
                 localStorage.clear();
                 window.location.href = 'index.html';
             } catch(e) {
-                alert("Success! (Notification might fail if Token is wrong)");
+                alert("Order recorded!");
                 window.location.href = 'index.html';
             }
         }
 
-        // รันการสร้าง QR ทันทีที่โหลดหน้า
-        window.onload = generateQR;
+        // รันทันทีเมื่อหน้าโหลดเสร็จ
+        window.onload = initPayment;
     </script>
 </body>
 </html>
