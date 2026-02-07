@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ABA KHQR - Pay Now</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-slate-100 p-4 min-h-screen flex items-center justify-center">
+    <div class="bg-white max-w-sm w-full rounded-[3rem] shadow-2xl p-8 border-t-[12px] border-blue-900">
+        <div class="flex justify-center mb-6"><img src="https://www.ababank.com/typo3conf/ext/aba/Resources/Public/Images/aba-logo.png" class="h-8"></div>
+        <div class="bg-white border-4 border-blue-50 rounded-[2.5rem] p-4 shadow-inner">
+            <div id="qrcode" class="flex justify-center"></div>
+            <p class="text-4xl font-black text-center mt-4 text-slate-800" id="amt">$0.00</p>
+        </div>
+        <div class="mt-8 space-y-4">
+            <p class="text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Merchant: BARDS by P.LOK</p>
+            <div class="p-4 bg-gray-50 rounded-2xl">
+                <label class="text-[10px] font-black text-blue-600 uppercase">Attach Receipt</label>
+                <input type="file" id="slip" class="w-full text-xs mt-1">
+            </div>
+            <button onclick="finish()" id="btn" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-blue-100">CONFIRM PAYMENT</button>
+        </div>
+    </div>
+
+    <script>
+        // --- ส่วนที่คุณต้องเติม ---
+        const BOT_TOKEN = '7577129821:AAF-ZEZJakHhPaejHVKphfoSmBXQ2cK0qH0'; 
+        const CHAT_ID = '7299129094'; 
+        // -----------------------
+
+        function getQR() {
+            const amount = localStorage.getItem('subtotal');
+            document.getElementById('amt').innerText = `$${amount}`;
+            
+            // สร้าง KHQR Payload จากข้อมูลคุณ
+            let p = "000201010212"; 
+            let t30 = "0016abaakhppxxx@abaa01151250719163741";
+            p += "30" + t30.length + t30;
+            p += "520453995303840";
+            p += "54" + amount.length.padStart(2, '0') + amount;
+            p += "5802KH5914BARDS by P.LOK6009SIEM REAP";
+            let t62 = "0010PAYWAY@ABA01071407908";
+            p += "62" + t62.length + t62 + "6304";
+
+            const qrString = p + crc16(p);
+            new QRCode(document.getElementById("qrcode"), { text: qrString, width: 220, height: 220, colorDark: "#003d7d" });
+        }
+
+        function crc16(d) {
+            let c = 0xFFFF;
+            for (let i = 0; i < d.length; i++) {
+                let x = ((c >> 8) ^ d.charCodeAt(i)) & 0xFF;
+                x ^= x >> 4;
+                c = ((c << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+            }
+            return c.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        async function finish() {
+            const btn = document.getElementById('btn');
+            const slip = document.getElementById('slip').files[0];
+            const info = JSON.parse(localStorage.getItem('customer'));
+            const total = localStorage.getItem('subtotal');
+
+            btn.disabled = true; btn.innerText = "Processing...";
+            const txt = `🚀 *New Order Alert!*\n💰 Total: $${total}\n👤 Name: ${info.name}\n📞 Tel: ${info.phone}\n📍 Addr: ${info.address}`;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(txt)}&parse_mode=Markdown`);
+                if(slip) {
+                    const fd = new FormData(); fd.append('chat_id', CHAT_ID); fd.append('photo', slip);
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+                }
+                alert("Order Placed Successfully!");
+                localStorage.clear(); window.location.href = 'index.html';
+            } catch(e) { alert("Error!"); btn.disabled = false; }
+        }
+        getQR();
+    </script>
+</body>
+</html>
+
